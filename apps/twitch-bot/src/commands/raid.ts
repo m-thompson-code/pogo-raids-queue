@@ -40,7 +40,7 @@ export const handleRaidCommand = async (
     return;
   }
 
-  if (pogoUsername.includes(',')) {
+  if (!/^[a-zA-Z0-9]+$/.test(pogoUsername)) {
     await sendChatMessage(messages.raidInvalidUsername(event.chatter_user_login));
     return;
   }
