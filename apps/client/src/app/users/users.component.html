@@ -1,0 +1,79 @@
+<section class="users">
+  <div class="users__header">
+    <span class="users__count">{{ totalUsers() }} users</span>
+  </div>
+
+  <div class="users__table-wrap">
+    @if (pageLoading()) {
+      <div class="users__page-overlay"></div>
+    }
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th class="users-table__th" (click)="sort('twitchUsername')">
+            Twitch
+            @if (sortKey() === 'twitchUsername') {
+              <span class="sort-icon">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+            }
+          </th>
+          <th class="users-table__th" (click)="sort('pogoUsername')">
+            PoGo
+            @if (sortKey() === 'pogoUsername') {
+              <span class="sort-icon">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+            }
+          </th>
+          <th class="users-table__th users-table__th--center" (click)="sort('isSubscriber')">
+            Sub
+            @if (sortKey() === 'isSubscriber') {
+              <span class="sort-icon">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+            }
+          </th>
+          <th class="users-table__th users-table__th--center" (click)="sort('isVip')">
+            VIP
+            @if (sortKey() === 'isVip') {
+              <span class="sort-icon">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+            }
+          </th>
+          <th class="users-table__th" (click)="sort('lastRaided')">
+            Last Raided
+            @if (sortKey() === 'lastRaided') {
+              <span class="sort-icon">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+            }
+          </th>
+          <th class="users-table__th users-table__th--right" (click)="sort('raidCount')">
+            Raids
+            @if (sortKey() === 'raidCount') {
+              <span class="sort-icon">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+            }
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of users(); track user.twitchUserId) {
+          <tr class="users-table__row">
+            <td class="users-table__td">{{ user.twitchUsername }}</td>
+            <td class="users-table__td">{{ user.pogoUsername }}</td>
+            <td class="users-table__td users-table__td--center">
+              @if (user.isSubscriber) {
+                <img class="users-table__sub-badge" src="/sub-badge.png" alt="" aria-hidden="true">
+              }
+            </td>
+            <td class="users-table__td users-table__td--center">
+              @if (user.isVip) { ✓ }
+            </td>
+            <td class="users-table__td">{{ user.lastRaided | date:'short' }}</td>
+            <td class="users-table__td users-table__td--right">{{ user.raidCount }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (pageCount() > 1) {
+    <div class="users__pagination">
+      <button class="page-btn" [disabled]="page() === 0" (click)="prevPage()">‹ Prev</button>
+      <span class="page-info">Page {{ page() + 1 }} of {{ pageCount() }}</span>
+      <button class="page-btn" [disabled]="page() === pageCount() - 1" (click)="nextPage()">Next ›</button>
+    </div>
+  }
+</section>

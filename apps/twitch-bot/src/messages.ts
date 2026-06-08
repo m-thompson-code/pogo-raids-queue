@@ -13,12 +13,12 @@ export const messages = {
     `@${username} !raid YourPogoUsername to join the queue!`,
   raidInvalidUsername: (username: string) =>
     `@${username} Your pogo username includes an invalid character.`,
-  raidAdded: (username: string) =>
-    `@${username} You've been added to the queue!`,
+  raidAdded: (pogoUsername: string) =>
+    `${pogoUsername} added to the raid queue!`,
 
   // !leave
-  leaveRemoved: (username: string) =>
-    `@${username} You've been removed from the queue.`,
+  leaveRemoved: (pogoUsername: string) =>
+    `${pogoUsername} removed from the raid queue.`,
 
   // !remove
   removeUsage: (username: string) =>
@@ -31,8 +31,8 @@ export const messages = {
   // !add
   addUsage: (username: string) =>
     `@${username} Usage: !add <pogo_username>[,<pogo_username>...]`,
-  addSuccess: (username: string, listed: string, noun: string) =>
-    `@${username} ${listed} ${noun} been added to the queue.`,
+  addSuccess: (listed: string, noun: string) =>
+    `${listed} ${noun} been added to the raid queue.`,
 
   // !list
   listEmpty: () =>

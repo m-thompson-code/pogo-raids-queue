@@ -1,0 +1,44 @@
+.app-nav {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid rgba(128, 128, 255, 0.15);
+
+  &__link {
+    padding: 0.35rem 0.9rem;
+    border-radius: 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: rgba(201, 168, 255, 0.7);
+    transition: background 0.15s, color 0.15s;
+
+    &:hover {
+      background: rgba(93, 63, 158, 0.3);
+      color: #c9a8ff;
+    }
+
+    &--active {
+      background: rgba(93, 63, 158, 0.45);
+      color: #fff;
+    }
+  }
+}
+
+body.light .app-nav {
+  border-bottom-color: rgba(90, 45, 191, 0.15);
+
+  .app-nav__link {
+    color: rgba(90, 45, 191, 0.65);
+
+    &:hover {
+      background: rgba(181, 160, 232, 0.3);
+      color: #5a2dbf;
+    }
+
+    &--active {
+      background: rgba(181, 160, 232, 0.5);
+      color: #3d1a9e;
+    }
+  }
+}

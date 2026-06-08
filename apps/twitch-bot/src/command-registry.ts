@@ -40,6 +40,12 @@ export const COMMAND_REGISTRY: CommandMeta[] = [
     description: 'Lists the current queue',
   },
   {
+    command: 'groups',
+    usage: '!groups',
+    permission: 'everyone',
+    description: 'Lists the queue grouped in sets of 5',
+  },
+  {
     command: 'add',
     usage: '!add <name1,name2,...>',
     permission: 'mods',

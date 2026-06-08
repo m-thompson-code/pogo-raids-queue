@@ -35,5 +35,5 @@ export const handleAddCommand = async (
 
   const listed = usernames.join(', ');
   const noun = usernames.length === 1 ? 'has' : 'have';
-  await sendChatMessage(messages.addSuccess(event.chatter_user_login, listed, noun));
+  await sendChatMessage(messages.addSuccess(listed, noun));
 };

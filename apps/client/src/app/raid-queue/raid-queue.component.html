@@ -21,6 +21,9 @@
           <ul class="group__pills">
             @for (entry of group; track entry.twitchUserId) {
               <li class="pill" [attr.data-twitch]="entry.twitchUsername || 'Manual entry'" (click)="copyEntry(entry)">
+                @if (entry.isSubscriber) {
+                  <img class="pill__sub-badge" src="/sub-badge.png" alt="" aria-hidden="true">
+                }
                 {{ entry.pogoUsername }}
                 <button class="pill__remove" (click)="$event.stopPropagation(); removeEntry(entry)">&#x2715;</button>
               </li>

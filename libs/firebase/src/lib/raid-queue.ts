@@ -23,8 +23,10 @@ export interface RaidParams {
 export const upsertUser = async (params: RaidParams): Promise<void> => {
   const userRef = getDb().collection('users').doc(params.twitchUserId);
 
-  await userRef.set(
-    {
+  await getDb().runTransaction(async (transaction) => {
+    const existing = await transaction.get(userRef);
+
+    const fields = {
       twitchUserId: params.twitchUserId,
       twitchUsername: params.twitchUsername,
       pogoUsername: params.pogoUsername,
@@ -32,9 +34,21 @@ export const upsertUser = async (params: RaidParams): Promise<void> => {
       isVip: params.isVip,
       lastRaided: FieldValue.serverTimestamp(),
       raidCount: FieldValue.increment(1),
-    },
-    { merge: true }
-  );
+    };
+
+    if (!existing.exists) {
+      transaction.set(userRef, {
+        ...fields,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    } else {
+      const update: Record<string, unknown> = { ...fields };
+      if (!existing.data()?.['createdAt']) {
+        update['createdAt'] = FieldValue.serverTimestamp();
+      }
+      transaction.update(userRef, update);
+    }
+  });
 };
 
 /**
@@ -172,8 +186,12 @@ export const strikeUser = async (
  * Removes the raidQueue document for the given Twitch user ID.
  * No-op if the document does not exist.
  */
-export const removeFromQueueByTwitchId = async (twitchUserId: string): Promise<void> => {
-  await getDb().collection('raidQueue').doc(twitchUserId).delete();
+export const removeFromQueueByTwitchId = async (twitchUserId: string): Promise<string | null> => {
+  const ref = getDb().collection('raidQueue').doc(twitchUserId);
+  const doc = await ref.get();
+  const pogoUsername = doc.exists ? (doc.data()?.['pogoUsername'] as string) ?? null : null;
+  await ref.delete();
+  return pogoUsername;
 };
 
 /**

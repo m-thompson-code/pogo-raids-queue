@@ -26,6 +26,7 @@ export const CANONICAL_COMMANDS = [
   'enable',
   'disable',
   'commands',
+  'groups',
 ] as const;
 
 export type CanonicalCommand = (typeof CANONICAL_COMMANDS)[number];
@@ -51,11 +52,14 @@ export const COMMAND_ALIASES: Record<string, CanonicalCommand> = {
   enable: 'enable',
   disable: 'disable',
   commands: 'commands',
+  groups: 'groups',
 
   // aliases
   r: 'raid',
   join: 'raid',
-  l: 'leave'
+  l: 'leave',
+  group: 'groups',
+  g: 'groups',
 };
 
 /**

@@ -7,6 +7,6 @@ export const handleLeaveCommand = async (
   event: ChatMessageEvent,
   provider: QueueProvider
 ): Promise<void> => {
-  await provider.removeByTwitchId(event.chatter_user_id);
-  await sendChatMessage(messages.leaveRemoved(event.chatter_user_login));
+  const pogoUsername = await provider.removeByTwitchId(event.chatter_user_id);
+  await sendChatMessage(messages.leaveRemoved(pogoUsername ?? event.chatter_user_login));
 };

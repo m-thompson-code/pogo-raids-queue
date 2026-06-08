@@ -34,8 +34,8 @@ export class FirestoreQueueProvider implements QueueProvider {
     await firestoreAddManualToQueue(pogoUsername);
   }
 
-  async removeByTwitchId(twitchUserId: string): Promise<void> {
-    await firestoreRemoveByTwitchId(twitchUserId);
+  async removeByTwitchId(twitchUserId: string): Promise<string | null> {
+    return firestoreRemoveByTwitchId(twitchUserId);
   }
 
   async removeByPogoUsername(pogoUsername: string): Promise<boolean> {

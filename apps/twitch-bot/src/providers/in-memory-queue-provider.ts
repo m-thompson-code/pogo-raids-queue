@@ -64,8 +64,10 @@ export class InMemoryQueueProvider implements QueueProvider {
     }
   }
 
-  async removeByTwitchId(twitchUserId: string): Promise<void> {
+  async removeByTwitchId(twitchUserId: string): Promise<string | null> {
+    const entry = this.queue.get(twitchUserId);
     this.queue.delete(twitchUserId);
+    return entry?.pogoUsername ?? null;
   }
 
   async removeByPogoUsername(pogoUsername: string): Promise<boolean> {

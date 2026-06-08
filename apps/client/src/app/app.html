@@ -3,9 +3,12 @@
 @if (authState === undefined) {
   <!-- resolving auth state -->
 } @else if (authState) {
-  <app-raid-queue />
+  <nav class="app-nav">
+    <a routerLink="/" routerLinkActive="app-nav__link--active" [routerLinkActiveOptions]="{exact: true}" class="app-nav__link">Queue</a>
+    <a routerLink="/users" routerLinkActive="app-nav__link--active" class="app-nav__link">Users</a>
+  </nav>
+  <router-outlet />
   <app-settings />
 } @else {
   <app-login />
 }
-<router-outlet />

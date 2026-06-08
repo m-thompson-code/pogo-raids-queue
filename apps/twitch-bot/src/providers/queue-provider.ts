@@ -48,8 +48,8 @@ export interface QueueProvider {
    */
   addManual(pogoUsername: string): Promise<void>;
 
-  /** Removes the entry for the given Twitch user ID. No-op if not in queue. */
-  removeByTwitchId(twitchUserId: string): Promise<void>;
+  /** Removes the entry for the given Twitch user ID. Returns the pogo username if found, null otherwise. */
+  removeByTwitchId(twitchUserId: string): Promise<string | null>;
 
   /**
    * Removes the first queue entry whose `pogoUsername` matches (case-insensitive).

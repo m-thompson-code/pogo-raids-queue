@@ -49,13 +49,15 @@ export const handleRaidCommand = async (
     twitchUserId: event.chatter_user_id,
     twitchUsername: event.chatter_user_login,
     pogoUsername,
-    isSubscriber: event.badges.some((b) => b.set_id === 'subscriber'),
+    isSubscriber: event.badges.some(
+      (b) => b.set_id === 'subscriber' || b.set_id === 'premium' || b.set_id === 'founder'
+    ),
     isVip: event.badges.some((b) => b.set_id === 'vip'),
   };
 
   await Promise.all([provider.upsertUser(raidParams), provider.addToQueue(raidParams)]);
 
   markRaidSuccess(event.chatter_user_id);
-  await sendChatMessage(messages.raidAdded(event.chatter_user_login));
+  await sendChatMessage(messages.raidAdded(pogoUsername));
 };
 

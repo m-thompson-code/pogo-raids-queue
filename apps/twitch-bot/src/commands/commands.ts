@@ -23,7 +23,7 @@ export const handleCommandsCommand = async (event: ChatMessageEvent): Promise<vo
       await sendChatMessage(`You do not have permission to use !${target}.`);
       return;
     }
-    await sendChatMessage(`${meta.usage} — ${meta.description}`);
+    await sendChatMessage(`${meta.usage.replace(/^!/, '')} — ${meta.description}`);
     return;
   }
 
@@ -32,5 +32,5 @@ export const handleCommandsCommand = async (event: ChatMessageEvent): Promise<vo
     .filter((meta) => privileged || meta.permission === 'everyone')
     .map((meta) => `!${meta.command}`);
 
-  await sendChatMessage(`Commands: ${names.join(', ')}`);
+  await sendChatMessage(`Available commands: ${names.join(', ')}`);
 };

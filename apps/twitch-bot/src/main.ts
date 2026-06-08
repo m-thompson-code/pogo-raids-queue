@@ -7,6 +7,7 @@ import { handleClearCommand } from './commands/clear.js';
 import { handleOpenCommand } from './commands/open.js';
 import { handleCloseCommand } from './commands/close.js';
 import { handleListCommand } from './commands/list.js';
+import { handleGroupsCommand } from './commands/groups.js';
 import { handleAddCommand } from './commands/add.js';
 import { handleLeaveCommand } from './commands/leave.js';
 import { handleRemoveCommand } from './commands/remove.js';
@@ -74,6 +75,8 @@ import { resolveCommand } from './command-aliases.js';
       //   sendChatMessage(messages.hintCode(event.chatter_user_login));
       } else if (command === 'commands') {
         handleCommandsCommand(event);
+      } else if (command === 'groups') {
+        handleGroupsCommand(event, provider);
       } else if (command === 'leave') {
         handleLeaveCommand(event, provider);
       } else if (command === 'clear' || command === 'open' || command === 'close' || command === 'list' || command === 'add' || command === 'remove' || command === 'strike' || command === 'hintcooldown' || command === 'spamwindow') {
