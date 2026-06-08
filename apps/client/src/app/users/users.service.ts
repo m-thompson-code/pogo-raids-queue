@@ -17,7 +17,7 @@ import { from, type Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
-export const PAGE_SIZE = 1;
+export const PAGE_SIZE = 50;
 
 export interface RaidUser {
   twitchUserId: string;
