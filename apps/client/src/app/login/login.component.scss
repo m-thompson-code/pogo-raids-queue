@@ -1,0 +1,166 @@
+.login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+
+  &__card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    background: #1e1e2e;
+    border: 1px solid #2a2a3e;
+    border-radius: 1rem;
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  &__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.02em;
+  }
+
+  &__subtitle {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: -0.75rem;
+  }
+
+  &__credentials {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    width: 100%;
+    background: #13131f;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  &__field {
+    font-size: 0.8rem;
+    letter-spacing: 0.01em;
+
+    &--email {
+      color: #888;
+    }
+
+    &--password {
+      color: #ccc;
+      font-family: monospace;
+      font-size: 0.95rem;
+    }
+  }
+
+  &__pin-dots {
+    color: #9147ff;
+    letter-spacing: 0.15em;
+    margin-left: 0.15em;
+  }
+
+  &__numpad {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  &__pin-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    background: #13131f;
+    border: 1px solid #2a2a3e;
+    border-radius: 0.5rem;
+    padding: 0.85rem 1rem;
+    cursor: default;
+    outline: none;
+    transition: border-color 0.15s;
+
+    &:focus {
+      border-color: #9147ff;
+    }
+  }
+
+  &__dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #2a2a3e;
+    transition: background 0.15s;
+
+    &--filled {
+      background: #9147ff;
+    }
+  }
+
+  &__error {
+    color: #ff6b6b;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+
+  &__btn {
+    width: 100%;
+    padding: 0.7rem;
+    background: #9147ff;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+
+    &:hover:not(:disabled) {
+      background: #772ce8;
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.numpad {
+  &__row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+
+  &__key {
+    padding: 0.85rem;
+    background: #2a2a3e;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+
+    &--action {
+      background: #1e1e2e;
+      color: #888;
+    }
+
+    &--submit {
+      color: #9147ff;
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+  }
+}

@@ -1,0 +1,39 @@
+<div class="settings-bar">
+  <button class="settings-bar__toggle" (click)="open = !open">
+    ⚙ Settings
+  </button>
+
+  @if (open) {
+    <div class="settings-panel">
+      <div class="setting">
+        <span class="setting__label">Mode</span>
+        <button class="mode-btn" (click)="toggleMode()">
+          {{ settings.darkMode ? '☀ Light' : '🌙 Dark' }}
+        </button>
+      </div>
+
+      <div class="setting">
+        <span class="setting__label">Font size</span>
+        <div class="font-scale">
+          @for (opt of fontScaleOptions; track opt.value) {
+            <button
+              class="font-scale__btn"
+              [class.font-scale__btn--active]="settings.fontScale === opt.value"
+              (click)="setFontScale(opt.value)"
+            >{{ opt.label }}</button>
+          }
+        </div>
+      </div>
+
+      <div class="setting">
+        <span class="setting__label">Background</span>
+        <input
+          class="color-pick"
+          type="color"
+          [value]="settings.bgColor"
+          (input)="onBgChange($event)"
+        />
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,11 @@
+@let authState = user$ | async;
+
+@if (authState === undefined) {
+  <!-- resolving auth state -->
+} @else if (authState) {
+  <app-raid-queue />
+  <app-settings />
+} @else {
+  <app-login />
+}
+<router-outlet />

@@ -1,0 +1,42 @@
+<div class="login">
+  <div class="login__card">
+
+    <div class="login__numpad">
+      <div
+        class="login__pin-display"
+        tabindex="0"
+        (keydown)="onKeyDown($event)"
+      >
+        @for (i of [0,1,2,3]; track i) {
+          <span class="login__dot" [class.login__dot--filled]="i < pin.length"></span>
+        }
+      </div>
+
+      @for (row of rows; track $index) {
+        <div class="numpad__row">
+          @for (key of row; track key) {
+            <button
+              class="numpad__key"
+              [class.numpad__key--action]="key === '⌫' || key === '→'"
+              [class.numpad__key--submit]="key === '→'"
+              [disabled]="loading || (key === '→' && pin.length < 4)"
+              (click)="pressKey(key)"
+            >{{ key }}</button>
+          }
+        </div>
+      }
+    </div>
+
+    @if (error) {
+      <p class="login__error">{{ error }}</p>
+    }
+
+    <button
+      class="login__btn"
+      [disabled]="pin.length < 4 || loading"
+      (click)="submit()"
+    >
+      {{ loading ? 'Signing in…' : 'Enter' }}
+    </button>
+  </div>
+</div>

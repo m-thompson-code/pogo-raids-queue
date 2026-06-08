@@ -1,0 +1,52 @@
+/* You can add global styles to this file, and also import other style files */
+
+:root {
+  --bg: #13131f;
+  --font-scale: 1;
+  color-scheme: dark;
+  font-size: calc(16px * var(--font-scale));
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: #fff;
+  font-family: sans-serif;
+}
+
+body.light {
+  color: #111;
+
+  .snackbar {
+    background: #f0f0f0;
+    color: #111;
+    border-color: #9147ff;
+  }
+}
+
+.snackbar {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2a2a3e;
+  border: 1px solid #9147ff;
+  color: #fff;
+  font-size: 0.85rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 0.5rem;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1000;
+  animation: snackbar-in 0.2s ease;
+}
+
+@keyframes snackbar-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(0.5rem); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

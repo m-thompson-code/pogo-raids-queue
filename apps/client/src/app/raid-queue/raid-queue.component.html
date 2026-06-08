@@ -1,0 +1,37 @@
+<section class="queue">
+  @let queue = queue$ | async;
+  @if (queue !== null) {
+    @if (queue.length === 0) {
+      <p class="queue__empty">Queue is empty</p>
+    } @else {
+      <div class="queue__toolbar">
+        <button class="toolbar-btn" (click)="copyAll(queue)">Copy all</button>
+        <button class="toolbar-btn toolbar-btn--danger" (click)="clearAll(queue)">Clear all</button>
+      </div>
+
+      @for (group of toGroups(queue); track $index) {
+        <div class="group">
+          <div class="group__header">
+            <h3 class="group__label">Group {{ $index + 1 }}</h3>
+            <div class="group__actions">
+              <button class="toolbar-btn toolbar-btn--sm" (click)="copyGroup(group, $index)">Copy</button>
+              <button class="toolbar-btn toolbar-btn--sm toolbar-btn--danger" (click)="removeGroup(group, $index)">Clear</button>
+            </div>
+          </div>
+          <ul class="group__pills">
+            @for (entry of group; track entry.twitchUserId) {
+              <li class="pill" [attr.data-twitch]="entry.twitchUsername || 'Manual entry'" (click)="copyEntry(entry)">
+                {{ entry.pogoUsername }}
+                <button class="pill__remove" (click)="$event.stopPropagation(); removeEntry(entry)">&#x2715;</button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    }
+  }
+</section>
+
+@if (snackbar()) {
+  <div class="snackbar">{{ snackbar() }}</div>
+}

@@ -1,0 +1,200 @@
+// ── CSS variable defaults (dark mode) ─────────────────────────────────────
+
+:host {
+  --pill-bg: #2a2a3e;
+  --pill-color: #fff;
+  --pill-remove-color: rgba(255,255,255,0.5);
+  --pill-tooltip-bg: #13131f;
+  --pill-tooltip-border: #2a2a3e;
+  --pill-tooltip-color: #ccc;
+  --btn-bg: #3d2a6e;
+  --btn-color: #c9a8ff;
+  --btn-border: #6a3fbf;
+  --btn-hover-bg: #5a3d9e;
+  --btn-hover-color: #fff;
+  --btn-danger-bg: #3d1a1a;
+  --btn-danger-color: #ff9999;
+  --btn-danger-border: #8b3030;
+  --btn-danger-hover-bg: #6b2a2a;
+  --btn-danger-hover-color: #ffd0d0;
+  --label-color: #888;
+}
+
+:host-context(body.light) {
+  --pill-bg: #e0dff5;
+  --pill-color: #1a1a2e;
+  --pill-remove-color: rgba(0,0,0,0.35);
+  --pill-tooltip-bg: #fff;
+  --pill-tooltip-border: #b0a0e0;
+  --pill-tooltip-color: #333;
+  --btn-bg: #ede8ff;
+  --btn-color: #5a2dbf;
+  --btn-border: #b8a0e8;
+  --btn-hover-bg: #d5caff;
+  --btn-hover-color: #3d1a9e;
+  --btn-danger-bg: #ffe8e8;
+  --btn-danger-color: #b03030;
+  --btn-danger-border: #e0b0b0;
+  --btn-danger-hover-bg: #ffd0d0;
+  --btn-danger-hover-color: #8b1a1a;
+  --label-color: #333;
+}
+
+// ── Layout ─────────────────────────────────────────────────────────────────
+
+.queue {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding-bottom: 4rem;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  &__empty {
+    color: var(--label-color);
+    font-size: 1rem;
+  }
+
+  &__toolbar {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+// ── Toolbar buttons ────────────────────────────────────────────────────────
+
+.toolbar-btn {
+  padding: 0.35rem 0.9rem;
+  background: var(--btn-bg);
+  color: var(--btn-color);
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid var(--btn-border);
+  border-radius: 0.4rem;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: var(--btn-hover-bg);
+    color: var(--btn-hover-color);
+  }
+
+  &--danger {
+    background: var(--btn-danger-bg);
+    color: var(--btn-danger-color);
+    border-color: var(--btn-danger-border);
+
+    &:hover {
+      background: var(--btn-danger-hover-bg);
+      color: var(--btn-danger-hover-color);
+    }
+  }
+
+  &--sm {
+    padding: 0.2rem 0.6rem;
+    font-size: 0.7rem;
+  }
+}
+
+// ── Groups ─────────────────────────────────────────────────────────────────
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--label-color);
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.35rem;
+  }
+
+  &__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+}
+
+// ── Pills ──────────────────────────────────────────────────────────────────
+
+.pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.85rem;
+  border-radius: 999px;
+  background: var(--pill-bg);
+  color: var(--pill-color);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer !important;
+  transition: background 0.15s;
+  user-select: none;
+
+  &:hover {
+    background: #9147ff;
+    color: #fff;
+  }
+
+  &__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--pill-remove-color);
+    font-size: 0.65rem;
+    line-height: 1;
+    cursor: pointer;
+    outline: none;
+    flex-shrink: 0;
+    transition: color 0.15s, background 0.15s;
+
+    &:hover {
+      color: #fff;
+      background: rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  &[data-twitch]:hover::after {
+    content: attr(data-twitch);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--pill-tooltip-bg);
+    border: 1px solid var(--pill-tooltip-border);
+    color: var(--pill-tooltip-color);
+    font-size: 0.75rem;
+    font-weight: 400;
+    white-space: nowrap;
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.35rem;
+    pointer-events: none;
+    z-index: 10;
+  }
+}

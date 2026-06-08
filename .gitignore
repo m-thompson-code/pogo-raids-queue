@@ -24,6 +24,12 @@ node_modules
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# environment secrets
+.env
+.env.local
+.env*.local
+*service-account*.json
+
 # misc
 /.sass-cache
 /connect.lock
@@ -42,3 +48,5 @@ Thumbs.db
 .nx/workspace-data
 .claude/worktrees
 .claude/settings.local.json
+
+.angular

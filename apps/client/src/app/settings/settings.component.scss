@@ -1,0 +1,156 @@
+.settings-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 500;
+
+  &__toggle {
+    background: #1e1e2e;
+    border: 1px solid #2a2a3e;
+    border-bottom: none;
+    border-radius: 0.5rem 0.5rem 0 0;
+    color: #888;
+    font-size: 0.75rem;
+    padding: 0.3rem 1rem;
+    cursor: pointer;
+    outline: none;
+    transition: color 0.15s, background 0.15s;
+
+    &:hover {
+      color: #fff;
+      background: #2a2a3e;
+    }
+  }
+}
+
+:host-context(body.light) {
+  .settings-bar__toggle {
+    background: #e8e8f0;
+    border-color: #c0b8e0;
+    color: #555;
+
+    &:hover {
+      background: #d5cff5;
+      color: #1a1a2e;
+    }
+  }
+
+  .settings-panel {
+    background: #f0eeff;
+    border-color: #c0b8e0;
+  }
+
+  .setting__label {
+    color: #333;
+  }
+
+  .mode-btn,
+  .font-scale__btn {
+    background: #e0daf5;
+    color: #3a2a7e;
+    border-color: #b8a8e0;
+
+    &:hover {
+      background: #cfc8f5;
+      color: #1a1050;
+    }
+  }
+
+  .font-scale__btn--active {
+    background: #9147ff;
+    border-color: #9147ff;
+    color: #fff;
+  }
+
+  .color-pick {
+    background: #e0daf5;
+    border-color: #b8a8e0;
+  }
+}
+
+.settings-panel {
+  width: 100%;
+  background: #1e1e2e;
+  border-top: 1px solid #2a2a3e;
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+  padding: 0.75rem 1.5rem;
+  flex-wrap: wrap;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.setting {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  &__label {
+    font-size: 0.75rem;
+    color: #888;
+    white-space: nowrap;
+    transition: color 0.2s;
+  }
+}
+
+.mode-btn {
+  padding: 0.3rem 0.85rem;
+  background: #2a2a3e;
+  color: #ccc;
+  border: 1px solid #3a3a5e;
+  border-radius: 0.4rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: #3a3a5e;
+    color: #fff;
+  }
+}
+
+.font-scale {
+  display: flex;
+  gap: 0.25rem;
+
+  &__btn {
+    width: 2rem;
+    height: 2rem;
+    background: #2a2a3e;
+    color: #888;
+    border: 1px solid #3a3a5e;
+    border-radius: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    outline: none;
+    transition: background 0.15s, color 0.15s;
+
+    &:hover {
+      background: #3a3a5e;
+      color: #fff;
+    }
+
+    &--active {
+      background: #9147ff;
+      border-color: #9147ff;
+      color: #fff;
+    }
+  }
+}
+
+.color-pick {
+  width: 2.2rem;
+  height: 2rem;
+  padding: 0.1rem;
+  border: 1px solid #3a3a5e;
+  border-radius: 0.35rem;
+  background: #2a2a3e;
+  cursor: pointer;
+  outline: none;
+}
