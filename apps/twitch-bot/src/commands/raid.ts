@@ -1,5 +1,7 @@
 import { sendChatMessage } from '../chat.js';
+import { messages } from '../messages.js';
 import { isQueueOpen } from '../queue-state.js';
+import { markRaidSuccess } from './hints.js';
 import type { QueueProvider } from '../providers/queue-provider.js';
 import type { ChatMessageEvent } from '../types.js';
 
@@ -27,26 +29,19 @@ export const handleRaidCommand = async (
   const parts = event.message.text.trim().split(/\s+/);
   // parts[0] = '!raid' (any casing), parts[1] = pogo username (optional, preserve original case)
   const pogoUsername = parts[1];
-  const chatter = `@${event.chatter_user_login}`;
 
   if (!isQueueOpen()) {
-    await sendChatMessage(
-      `${chatter} Raids are closed, try again after they are open.`
-    );
+    await sendChatMessage(messages.raidQueueClosed(event.chatter_user_login));
     return;
   }
 
   if (!pogoUsername) {
-    await sendChatMessage(
-      `${chatter} You forgot your pogo username: !raid your_pogo_username`
-    );
+    await sendChatMessage(messages.raidMissingUsername(event.chatter_user_login));
     return;
   }
 
   if (pogoUsername.includes(',')) {
-    await sendChatMessage(
-      `${chatter} Your pogo username includes an invalid character.`
-    );
+    await sendChatMessage(messages.raidInvalidUsername(event.chatter_user_login));
     return;
   }
 
@@ -60,6 +55,7 @@ export const handleRaidCommand = async (
 
   await Promise.all([provider.upsertUser(raidParams), provider.addToQueue(raidParams)]);
 
-  await sendChatMessage(`${chatter} You are added to the queue`);
+  markRaidSuccess(event.chatter_user_id);
+  await sendChatMessage(messages.raidAdded(event.chatter_user_login));
 };
 

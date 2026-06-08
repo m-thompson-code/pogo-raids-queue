@@ -1,4 +1,5 @@
 import { sendChatMessage } from '../chat.js';
+import { messages } from '../messages.js';
 import { openQueue } from '../queue-state.js';
 import type { QueueProvider } from '../providers/queue-provider.js';
 import type { ChatMessageEvent } from '../types.js';
@@ -17,7 +18,5 @@ export const handleOpenCommand = async (
   _provider: QueueProvider
 ): Promise<void> => {
   openQueue();
-  await sendChatMessage(
-    `@${event.chatter_user_login} The raid queue is now open! Use !raid your_pogo_username to join.`
-  );
+  await sendChatMessage(messages.openSuccess(event.chatter_user_login));
 };

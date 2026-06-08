@@ -1,4 +1,5 @@
 import { sendChatMessage } from '../chat.js';
+import { messages } from '../messages.js';
 import { closeQueue } from '../queue-state.js';
 import type { QueueProvider } from '../providers/queue-provider.js';
 import type { ChatMessageEvent } from '../types.js';
@@ -17,7 +18,5 @@ export const handleCloseCommand = async (
   _provider: QueueProvider
 ): Promise<void> => {
   closeQueue();
-  await sendChatMessage(
-    `@${event.chatter_user_login} The raid queue is now closed.`
-  );
+  await sendChatMessage(messages.closeSuccess(event.chatter_user_login));
 };

@@ -1,4 +1,5 @@
 import { sendChatMessage } from '../chat.js';
+import { messages } from '../messages.js';
 import type { QueueProvider } from '../providers/queue-provider.js';
 import type { ChatMessageEvent } from '../types.js';
 
@@ -15,7 +16,5 @@ export const handleClearCommand = async (
   provider: QueueProvider
 ): Promise<void> => {
   await provider.clearQueue();
-  await sendChatMessage(
-    `@${event.chatter_user_login} The raid queue has been cleared.`
-  );
+  await sendChatMessage(messages.clearSuccess(event.chatter_user_login));
 };

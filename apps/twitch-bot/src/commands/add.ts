@@ -1,4 +1,5 @@
 import { sendChatMessage } from '../chat.js';
+import { messages } from '../messages.js';
 import type { QueueProvider } from '../providers/queue-provider.js';
 import type { ChatMessageEvent } from '../types.js';
 
@@ -22,10 +23,9 @@ export const handleAddCommand = async (
   const parts = event.message.text.trim().split(/\s+/);
   // parts[0] = '!add', rest joined and split by comma to support multiple usernames
   const rawArg = parts.slice(1).join('');
-  const chatter = `@${event.chatter_user_login}`;
 
   if (!rawArg) {
-    await sendChatMessage(`${chatter} Usage: !add <pogo_username>[,<pogo_username>...]`);
+    await sendChatMessage(messages.addUsage(event.chatter_user_login));
     return;
   }
 
@@ -35,5 +35,5 @@ export const handleAddCommand = async (
 
   const listed = usernames.join(', ');
   const noun = usernames.length === 1 ? 'has' : 'have';
-  await sendChatMessage(`${chatter} ${listed} ${noun} been added to the queue.`);
+  await sendChatMessage(messages.addSuccess(event.chatter_user_login, listed, noun));
 };

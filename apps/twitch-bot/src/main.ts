@@ -1,6 +1,7 @@
 import { validateToken } from './auth.js';
 import { connectBot } from './websocket/index.js';
 import { SubscriptionType } from './types.js';
+import { loadSettings } from './persisted-settings.js';
 import { handleRaidCommand } from './commands/raid.js';
 import { handleClearCommand } from './commands/clear.js';
 import { handleOpenCommand } from './commands/open.js';
@@ -9,9 +10,15 @@ import { handleListCommand } from './commands/list.js';
 import { handleAddCommand } from './commands/add.js';
 import { handleLeaveCommand } from './commands/leave.js';
 import { handleRemoveCommand } from './commands/remove.js';
+import { handleStrikeCommand } from './commands/strike.js';
+import { maybeHintRaidCommand, handleHintCooldownCommand, maybeHintCode } from './commands/hints.js';
+import { handleSpamWindowCommand } from './commands/spam-window.js';
+import { checkSpam } from './spam-detection.js';
 import { FirestoreQueueProvider } from './providers/firestore-queue-provider.js';
 import { isPrivileged } from './permissions.js';
 import { sendChatMessage } from './chat.js';
+// import { messages } from './messages.js'; // re-enable when !code command is re-enabled
+import { resolveCommand } from './command-aliases.js';
 // To use the in-memory provider instead, swap the import above for:
 // import { InMemoryQueueProvider } from './providers/in-memory-queue-provider.js';
 
@@ -29,6 +36,7 @@ import { sendChatMessage } from './chat.js';
  *   Privileged: !clear, !open, !close, !list  (broadcaster + moderators only)
  */
 (async () => {
+  loadSettings();
   await validateToken();
 
   const provider = new FirestoreQueueProvider();
@@ -40,30 +48,44 @@ import { sendChatMessage } from './chat.js';
         `MSG #${event.broadcaster_user_login} <${event.chatter_user_login}> ${event.message.text}`
       );
 
-      const text = event.message.text.trim().toLowerCase();
+      const text = event.message.text.trim();
+      const command = resolveCommand(text);
 
-      if (text.startsWith('!raid')) {
+      if (command === 'raid') {
         handleRaidCommand(event, provider);
-      } else if (text === '!leave') {
+      // } else if (command === 'code') {
+      //   sendChatMessage(messages.hintCode(event.chatter_user_login));
+      } else if (command === 'leave') {
         handleLeaveCommand(event, provider);
-      } else if (text === '!clear' || text === '!open' || text === '!close' || text === '!list' || text.startsWith('!add') || text.startsWith('!remove')) {
+      } else if (command === 'clear' || command === 'open' || command === 'close' || command === 'list' || command === 'add' || command === 'remove' || command === 'strike' || command === 'hintcooldown' || command === 'spamwindow') {
         if (!isPrivileged(event)) {
           sendChatMessage(`@${event.chatter_user_login} you do not have permissions for that command`);
           return;
         }
-        if (text === '!clear') {
+        if (command === 'clear') {
           handleClearCommand(event, provider);
-        } else if (text === '!open') {
+        } else if (command === 'open') {
           handleOpenCommand(event, provider);
-        } else if (text === '!close') {
+        } else if (command === 'close') {
           handleCloseCommand(event, provider);
-        } else if (text === '!list') {
+        } else if (command === 'list') {
           handleListCommand(event, provider);
-        } else if (text.startsWith('!add')) {
+        } else if (command === 'add') {
           handleAddCommand(event, provider);
-        } else if (text.startsWith('!remove')) {
+        } else if (command === 'remove') {
           handleRemoveCommand(event, provider);
+        } else if (command === 'strike') {
+          handleStrikeCommand(event);
+        } else if (command === 'hintcooldown') {
+          handleHintCooldownCommand(event);
+        } else if (command === 'spamwindow') {
+          handleSpamWindowCommand(event);
         }
+      } else {
+        if (text.startsWith('!')) return;
+        if (checkSpam(event)) return;
+        maybeHintRaidCommand(event);
+        maybeHintCode(event);
       }
     }
   });

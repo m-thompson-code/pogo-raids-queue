@@ -1,4 +1,5 @@
 import { sendChatMessage } from '../chat.js';
+import { messages } from '../messages.js';
 import type { QueueProvider } from '../providers/queue-provider.js';
 import type { ChatMessageEvent } from '../types.js';
 
@@ -18,7 +19,7 @@ export const handleListCommand = async (
   const queue = await provider.getQueue();
 
   if (queue.length === 0) {
-    await sendChatMessage(`The queue is empty`);
+    await sendChatMessage(messages.listEmpty());
     return;
   }
 

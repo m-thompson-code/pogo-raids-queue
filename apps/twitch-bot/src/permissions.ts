@@ -12,6 +12,8 @@ import type { ChatMessageEvent } from './types.js';
  */
 export const isPrivileged = (event: ChatMessageEvent): boolean => {
   const isBroadcaster = event.chatter_user_id === config.chatChannelUserId;
-  const isModerator = event.badges.some((b) => b.set_id === 'moderator');
+  const isModerator = event.badges.some(
+    (b) => b.set_id === 'moderator' || b.set_id === 'lead_moderator'
+  );
   return isBroadcaster || isModerator;
 };

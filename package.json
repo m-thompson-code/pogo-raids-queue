@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "start": "npx nx build twitch-bot --output-style=stream && node --env-file=.env apps/twitch-bot/dist/main.js",
+    "dev": "tsx watch --env-file=.env apps/twitch-bot/src/main.ts",
+    "test": "tsx --test apps/twitch-bot/src/__tests__/**/*.test.ts",
     "deploy": "npx nx build client --configuration=production && npx firebase deploy --only hosting"
   },
   "private": true,
@@ -35,6 +38,7 @@
     "nx": "22.7.5",
     "prettier": "~3.6.2",
     "tslib": "^2.3.0",
+    "tsx": "^4.22.4",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.40.0"
   },

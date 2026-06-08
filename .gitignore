@@ -30,6 +30,9 @@ node_modules
 .env*.local
 *service-account*.json
 
+# runtime config (persisted bot settings)
+bot-config.json
+
 # misc
 /.sass-cache
 /connect.lock

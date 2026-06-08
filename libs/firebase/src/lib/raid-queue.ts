@@ -142,6 +142,33 @@ export const addManualToQueue = async (pogoUsername: string): Promise<void> => {
 };
 
 /**
+ * Finds a user in the `users` collection by Twitch username (case-insensitive)
+ * and either increments their `strikes` count by 1, or sets it to an explicit value.
+ *
+ * Returns true if the user was found and updated, false otherwise.
+ *
+ * @param twitchUsername - The Twitch username to look up (with or without @)
+ * @param value          - If provided, sets strikes to this value; otherwise increments by 1
+ */
+export const strikeUser = async (
+  twitchUsername: string,
+  twitchUserId: string,
+  value?: number
+): Promise<number> => {
+  const docRef = getDb().collection('users').doc(twitchUserId);
+  await docRef.set(
+    {
+      twitchUserId,
+      twitchUsername: twitchUsername.replace(/^@/, '').toLowerCase(),
+      strikes: value !== undefined ? value : FieldValue.increment(1),
+    },
+    { merge: true }
+  );
+  const updated = await docRef.get();
+  return (updated.data()?.['strikes'] as number) ?? 0;
+};
+
+/**
  * Removes the raidQueue document for the given Twitch user ID.
  * No-op if the document does not exist.
  */
