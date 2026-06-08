@@ -19,11 +19,14 @@ interface PersistedSettings {
   hintCooldownSeconds: number;
   /** Sliding window (seconds) for spam detection. 0 = disabled. */
   spamWindowSeconds: number;
+  /** Commands that have been explicitly disabled. */
+  disabledCommands: string[];
 }
 
 const DEFAULTS: PersistedSettings = {
   hintCooldownSeconds: 60,
   spamWindowSeconds: 60,
+  disabledCommands: [],
 };
 
 let settings: PersistedSettings = { ...DEFAULTS };
@@ -65,3 +68,20 @@ export const setSpamWindowSeconds = (seconds: number): void => {
 
 export const getHintCooldownMs = (): number => settings.hintCooldownSeconds * 1000;
 export const getSpamWindowMs = (): number => settings.spamWindowSeconds * 1000;
+
+export const isCommandEnabled = (command: string): boolean =>
+  !settings.disabledCommands.includes(command);
+
+export const disableCommand = (command: string): void => {
+  if (!settings.disabledCommands.includes(command)) {
+    settings.disabledCommands.push(command);
+    save();
+  }
+};
+
+export const enableCommand = (command: string): void => {
+  settings.disabledCommands = settings.disabledCommands.filter((c) => c !== command);
+  save();
+};
+
+export const getDisabledCommands = (): readonly string[] => settings.disabledCommands;

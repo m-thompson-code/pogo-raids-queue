@@ -23,6 +23,9 @@ export const CANONICAL_COMMANDS = [
   'hintcooldown',
   'spamwindow',
   // 'code',
+  'enable',
+  'disable',
+  'commands',
 ] as const;
 
 export type CanonicalCommand = (typeof CANONICAL_COMMANDS)[number];
@@ -45,6 +48,9 @@ export const COMMAND_ALIASES: Record<string, CanonicalCommand> = {
   hintcooldown: 'hintcooldown',
   spamwindow: 'spamwindow',
   // code: 'code',
+  enable: 'enable',
+  disable: 'disable',
+  commands: 'commands',
 
   // aliases
   r: 'raid',

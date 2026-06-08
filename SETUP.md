@@ -85,6 +85,7 @@ To stop it, press `Ctrl + C` in the terminal.
 
 | Command | Who can use it | What it does |
 |---|---|---|
+| `!commands` | Everyone | Lists all currently enabled commands in chat |
 | `!raid <PogoUsername>` | Everyone | Adds you to the raid queue |
 | `!leave` | Everyone | Removes you from the queue |
 | `!list` | Everyone | Lists the current queue |
@@ -95,3 +96,7 @@ To stop it, press `Ctrl + C` in the terminal.
 | `!close` | Mods / Broadcaster | Closes the queue |
 | `!strike <TwitchUsername>` | Mods / Broadcaster | Adds a strike to a user |
 | `!strike <TwitchUsername> <n>` | Mods / Broadcaster | Sets a user's strikes to a specific number |
+| `!hintcooldown <seconds>` | Mods / Broadcaster | Sets how long (in seconds) before the same hint can fire again in chat |
+| `!spamwindow <seconds>` | Mods / Broadcaster | Sets the spam detection window in seconds (`0` disables spam detection) |
+| `!enable <command>` | Mods / Broadcaster | Re-enables a previously disabled command |
+| `!disable <command>` | Mods / Broadcaster | Disables a command (persists across restarts; `!enable` and `!disable` cannot be disabled) |

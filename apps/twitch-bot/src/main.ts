@@ -1,7 +1,7 @@
 import { validateToken } from './auth.js';
 import { connectBot } from './websocket/index.js';
 import { SubscriptionType } from './types.js';
-import { loadSettings } from './persisted-settings.js';
+import { loadSettings, isCommandEnabled } from './persisted-settings.js';
 import { handleRaidCommand } from './commands/raid.js';
 import { handleClearCommand } from './commands/clear.js';
 import { handleOpenCommand } from './commands/open.js';
@@ -13,6 +13,8 @@ import { handleRemoveCommand } from './commands/remove.js';
 import { handleStrikeCommand } from './commands/strike.js';
 import { maybeHintRaidCommand, handleHintCooldownCommand, maybeHintCode } from './commands/hints.js';
 import { handleSpamWindowCommand } from './commands/spam-window.js';
+import { handleEnableCommand, handleDisableCommand } from './commands/enable-disable.js';
+import { handleCommandsCommand } from './commands/commands.js';
 import { checkSpam } from './spam-detection.js';
 import { FirestoreQueueProvider } from './providers/firestore-queue-provider.js';
 import { isPrivileged } from './permissions.js';
@@ -44,17 +46,34 @@ import { resolveCommand } from './command-aliases.js';
 
   connectBot(({ subscriptionType, event }) => {
     if (subscriptionType === SubscriptionType.ChannelChatMessage) {
-      console.log(
-        `MSG #${event.broadcaster_user_login} <${event.chatter_user_login}> ${event.message.text}`
-      );
-
       const text = event.message.text.trim();
       const command = resolveCommand(text);
+
+      if (command) {
+        console.log(`CMD !${command} <${event.chatter_user_login}>`);
+      }
+
+      // enable/disable bypass the enabled check intentionally
+      if (command === 'enable' || command === 'disable') {
+        if (!isPrivileged(event)) {
+          sendChatMessage(`@${event.chatter_user_login} you do not have permissions for that command`);
+          return;
+        }
+        if (command === 'enable') handleEnableCommand(event);
+        else handleDisableCommand(event);
+        return;
+      }
+
+      if (command && !isCommandEnabled(command)) {
+        return;
+      }
 
       if (command === 'raid') {
         handleRaidCommand(event, provider);
       // } else if (command === 'code') {
       //   sendChatMessage(messages.hintCode(event.chatter_user_login));
+      } else if (command === 'commands') {
+        handleCommandsCommand(event);
       } else if (command === 'leave') {
         handleLeaveCommand(event, provider);
       } else if (command === 'clear' || command === 'open' || command === 'close' || command === 'list' || command === 'add' || command === 'remove' || command === 'strike' || command === 'hintcooldown' || command === 'spamwindow') {

@@ -6,6 +6,7 @@
     "start": "npx nx build twitch-bot --output-style=stream && node --env-file=.env apps/twitch-bot/dist/main.js",
     "dev": "tsx watch --env-file=.env apps/twitch-bot/src/main.ts",
     "test": "tsx --test apps/twitch-bot/src/__tests__/**/*.test.ts",
+    "serve": "npx nx serve client",
     "deploy": "npx nx build client --configuration=production && npx firebase deploy --only hosting"
   },
   "private": true,
