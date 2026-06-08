@@ -12,5 +12,5 @@ import { SettingsComponent } from './settings/settings.component';
   styleUrl: './app.scss',
 })
 export class App {
-  protected readonly user$ = inject(AuthService).getUser();
+  protected readonly user$ = inject(AuthService).user$;
 }

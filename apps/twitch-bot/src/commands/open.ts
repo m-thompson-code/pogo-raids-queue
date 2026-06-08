@@ -1,7 +1,6 @@
-import { sendChatMessage } from '../chat.js';
+import { sendChatMessage } from '../api/chat.js';
 import { messages } from '../messages.js';
 import { openQueue } from '../queue-state.js';
-import type { QueueProvider } from '../providers/queue-provider.js';
 import type { ChatMessageEvent } from '../types.js';
 
 /**
@@ -14,8 +13,7 @@ import type { ChatMessageEvent } from '../types.js';
  * @param provider - Unused directly but kept consistent with other command signatures
  */
 export const handleOpenCommand = async (
-  event: ChatMessageEvent,
-  _provider: QueueProvider
+  event: ChatMessageEvent
 ): Promise<void> => {
   openQueue();
   await sendChatMessage(messages.openSuccess(event.chatter_user_login));

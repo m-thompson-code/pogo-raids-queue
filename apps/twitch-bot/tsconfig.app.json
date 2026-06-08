@@ -11,6 +11,9 @@
   "references": [
     {
       "path": "../../libs/firebase/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/twitch-eventsub/tsconfig.lib.json"
     }
   ]
 }

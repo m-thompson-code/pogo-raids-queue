@@ -1,5 +1,5 @@
-import { validateToken } from './auth.js';
-import { connectBot } from './websocket/index.js';
+import { validateToken } from './api/auth.js';
+import { connectBot } from '@pogo-raid-system/twitch-eventsub';
 import { SubscriptionType } from './types.js';
 import { loadSettings, isCommandEnabled } from './persisted-settings.js';
 import { handleRaidCommand } from './commands/raid.js';
@@ -12,16 +12,17 @@ import { handleAddCommand } from './commands/add.js';
 import { handleLeaveCommand } from './commands/leave.js';
 import { handleRemoveCommand } from './commands/remove.js';
 import { handleStrikeCommand } from './commands/strike.js';
-import { maybeHintRaidCommand, handleHintCooldownCommand, maybeHintCode } from './commands/hints.js';
+import { maybeHintRaidCommand, handleHintCooldownCommand, maybeHintCode } from './detectables/hints.js';
 import { handleSpamWindowCommand } from './commands/spam-window.js';
 import { handleEnableCommand, handleDisableCommand } from './commands/enable-disable.js';
 import { handleCommandsCommand } from './commands/commands.js';
-import { checkSpam } from './spam-detection.js';
+import { checkSpam } from './detectables/spam-detection.js';
 import { FirestoreQueueProvider } from './providers/firestore-queue-provider.js';
 import { isPrivileged } from './permissions.js';
-import { sendChatMessage } from './chat.js';
+import { sendChatMessage, registerEventSubListeners } from './api/chat.js';
 // import { messages } from './messages.js'; // re-enable when !code command is re-enabled
 import { resolveCommand } from './command-aliases.js';
+import { config } from './config.js';
 // To use the in-memory provider instead, swap the import above for:
 // import { InMemoryQueueProvider } from './providers/in-memory-queue-provider.js';
 
@@ -45,7 +46,7 @@ import { resolveCommand } from './command-aliases.js';
   const provider = new FirestoreQueueProvider();
   // const provider = new InMemoryQueueProvider();
 
-  connectBot(({ subscriptionType, event }) => {
+  connectBot(config.eventSubWebSocketUrl, registerEventSubListeners, ({ subscriptionType, event }) => {
     if (subscriptionType === SubscriptionType.ChannelChatMessage) {
       const text = event.message.text.trim();
       const command = resolveCommand(text);
@@ -75,11 +76,9 @@ import { resolveCommand } from './command-aliases.js';
       //   sendChatMessage(messages.hintCode(event.chatter_user_login));
       } else if (command === 'commands') {
         handleCommandsCommand(event);
-      } else if (command === 'groups') {
-        handleGroupsCommand(event, provider);
       } else if (command === 'leave') {
         handleLeaveCommand(event, provider);
-      } else if (command === 'clear' || command === 'open' || command === 'close' || command === 'list' || command === 'add' || command === 'remove' || command === 'strike' || command === 'hintcooldown' || command === 'spamwindow') {
+      } else if (command === 'clear' || command === 'open' || command === 'close' || command === 'list' || command === 'groups' || command === 'add' || command === 'remove' || command === 'strike' || command === 'hintcooldown' || command === 'spamwindow') {
         if (!isPrivileged(event)) {
           sendChatMessage(`@${event.chatter_user_login} you do not have permissions for that command`);
           return;
@@ -87,11 +86,13 @@ import { resolveCommand } from './command-aliases.js';
         if (command === 'clear') {
           handleClearCommand(event, provider);
         } else if (command === 'open') {
-          handleOpenCommand(event, provider);
+          handleOpenCommand(event);
         } else if (command === 'close') {
-          handleCloseCommand(event, provider);
+          handleCloseCommand(event);
         } else if (command === 'list') {
           handleListCommand(event, provider);
+        } else if (command === 'groups') {
+          handleGroupsCommand(event, provider);
         } else if (command === 'add') {
           handleAddCommand(event, provider);
         } else if (command === 'remove') {
@@ -112,5 +113,3 @@ import { resolveCommand } from './command-aliases.js';
     }
   });
 })();
-
-

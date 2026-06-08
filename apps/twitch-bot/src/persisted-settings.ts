@@ -1,6 +1,5 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Persisted runtime settings
@@ -10,7 +9,7 @@ import { fileURLToPath } from 'url';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CONFIG_PATH = resolve(
-  dirname(fileURLToPath(import.meta.url)),
+  dirname(__filename),
   '../../../bot-config.json'
 );
 

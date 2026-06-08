@@ -1,0 +1,6 @@
+{
+  "name": "twitch-eventsub",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/twitch-eventsub/src",
+  "projectType": "library"
+}

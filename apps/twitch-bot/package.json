@@ -4,6 +4,13 @@
   "private": true,
   "nx": {
     "targets": {
+      "test": {
+        "executor": "@nx/vitest:test",
+        "outputs": ["{workspaceRoot}/coverage/apps/twitch-bot"],
+        "options": {
+          "configFile": "apps/twitch-bot/vitest.config.ts"
+        }
+      },
       "build": {
         "executor": "@nx/esbuild:esbuild",
         "outputs": [
@@ -19,9 +26,6 @@
           "bundle": false,
           "main": "apps/twitch-bot/src/main.ts",
           "tsConfig": "apps/twitch-bot/tsconfig.app.json",
-          "assets": [
-            "apps/twitch-bot/src/assets"
-          ],
           "esbuildOptions": {
             "sourcemap": true,
             "outExtension": {

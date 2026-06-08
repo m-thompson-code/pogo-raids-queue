@@ -1,7 +1,7 @@
-import { sendChatMessage } from '../chat.js';
+import { sendChatMessage } from '../api/chat.js';
 import { messages } from '../messages.js';
 import { strikeUser } from '@pogo-raid-system/firebase';
-import { getTwitchUserId } from '../twitch-api.js';
+import { getTwitchUserId } from '../api/twitch-api.js';
 import type { ChatMessageEvent } from '../types.js';
 
 /**

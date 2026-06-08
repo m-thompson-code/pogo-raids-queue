@@ -1,7 +1,7 @@
-import { sendChatMessage } from '../chat.js';
+import { sendChatMessage } from '../api/chat.js';
 import { messages } from '../messages.js';
 import { isQueueOpen } from '../queue-state.js';
-import { markRaidSuccess } from './hints.js';
+import { markRaidSuccess } from '../detectables/hints.js';
 import type { QueueProvider } from '../providers/queue-provider.js';
 import type { ChatMessageEvent } from '../types.js';
 

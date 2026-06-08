@@ -1,4 +1,4 @@
-import { sendChatMessage } from '../chat.js';
+import { sendChatMessage } from '../api/chat.js';
 import { COMMAND_REGISTRY } from '../command-registry.js';
 import { isCommandEnabled } from '../persisted-settings.js';
 import { isPrivileged } from '../permissions.js';

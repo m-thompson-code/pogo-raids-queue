@@ -1,4 +1,4 @@
-import { sendChatMessage } from '../chat.js';
+import { sendChatMessage } from '../api/chat.js';
 import { CANONICAL_COMMANDS, type CanonicalCommand } from '../command-aliases.js';
 import { enableCommand, disableCommand, isCommandEnabled } from '../persisted-settings.js';
 import type { ChatMessageEvent } from '../types.js';

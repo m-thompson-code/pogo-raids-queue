@@ -1,6 +1,6 @@
-import { sendChatMessage } from '../chat.js';
+import { sendChatMessage } from '../api/chat.js';
 import { messages } from '../messages.js';
-import { setSpamWindow } from '../spam-detection.js';
+import { setSpamWindow } from '../detectables/spam-detection.js';
 import type { ChatMessageEvent } from '../types.js';
 
 /**

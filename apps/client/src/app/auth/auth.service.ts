@@ -21,9 +21,11 @@ export class AuthService {
    * `null`       — signed out
    * `User`       — signed in
    */
-  private readonly user$ = new BehaviorSubject<User | null | undefined>(
+  private readonly _user$ = new BehaviorSubject<User | null | undefined>(
     undefined
   );
+
+  readonly user$: Observable<User | null | undefined> = this._user$.asObservable();
 
   constructor() {
     const app =
@@ -33,11 +35,7 @@ export class AuthService {
 
     this.auth = getAuth(app);
 
-    onAuthStateChanged(this.auth, (user) => this.user$.next(user));
-  }
-
-  getUser(): Observable<User | null | undefined> {
-    return this.user$.asObservable();
+    onAuthStateChanged(this.auth, (user) => this._user$.next(user));
   }
 
   /** Signs in with the hardcoded email and the prefix + supplied 4-digit pin */

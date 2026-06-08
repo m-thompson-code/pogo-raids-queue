@@ -1,4 +1,4 @@
-import { sendChatMessage } from '../chat.js';
+import { sendChatMessage } from '../api/chat.js';
 import { messages } from '../messages.js';
 import type { QueueProvider } from '../providers/queue-provider.js';
 import type { ChatMessageEvent } from '../types.js';
