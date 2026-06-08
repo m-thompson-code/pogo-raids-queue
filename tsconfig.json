@@ -10,7 +10,7 @@
       "path": "./libs/firebase"
     },
     {
-      "path": "./apps/client"
+      "path": "./libs/twitch-eventsub"
     }
   ]
 }

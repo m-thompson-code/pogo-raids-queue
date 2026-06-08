@@ -7,7 +7,7 @@
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo"
   },
   "include": ["src/**/*.ts"],
-  "exclude": [],
+  "exclude": ["src/**/*.test.ts"],
   "references": [
     {
       "path": "../../libs/firebase/tsconfig.lib.json"

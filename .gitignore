@@ -54,4 +54,6 @@ Thumbs.db
 
 .angular
 
+.firebase/
+
 .nx/polygraph
