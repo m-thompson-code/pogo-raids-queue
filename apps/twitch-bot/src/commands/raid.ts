@@ -2,6 +2,7 @@ import { sendChatMessage } from '../api/chat.js';
 import { messages } from '../messages.js';
 import { isQueueOpen } from '../queue-state.js';
 import { markRaidSuccess } from '../detectables/hints.js';
+import { getUser } from '@pogo-raid-system/firebase';
 import type { QueueProvider } from '../providers/queue-provider.js';
 import type { ChatMessageEvent } from '../types.js';
 
@@ -36,7 +37,23 @@ export const handleRaidCommand = async (
   }
 
   if (!pogoUsername) {
-    await sendChatMessage(messages.raidMissingUsername(event.chatter_user_login));
+    const existing = await getUser(event.chatter_user_id);
+    if (existing?.pogoUsername) {
+      const raidParams = {
+        twitchUserId: event.chatter_user_id,
+        twitchUsername: event.chatter_user_login,
+        pogoUsername: existing.pogoUsername,
+        isSubscriber: event.badges.some(
+          (b) => b.set_id === 'subscriber' || b.set_id === 'premium' || b.set_id === 'founder'
+        ),
+        isVip: event.badges.some((b) => b.set_id === 'vip'),
+      };
+      await Promise.all([provider.upsertUser(raidParams), provider.addToQueue(raidParams)]);
+      markRaidSuccess(event.chatter_user_id);
+      await sendChatMessage(messages.raidAdded(existing.pogoUsername));
+    } else {
+      await sendChatMessage(messages.raidMissingUsername(event.chatter_user_login));
+    }
     return;
   }
 

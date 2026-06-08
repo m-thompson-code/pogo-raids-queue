@@ -3,6 +3,7 @@ export { MessageType, SubscriptionType } from '@pogo-raid-system/twitch-eventsub
 export type {
   ChatMessageEvent,
   ChatMessageFragment,
+  ChannelPointsRedemptionEvent,
   NotificationPayload,
   NotificationHandler,
   TwitchWebSocketMessage,

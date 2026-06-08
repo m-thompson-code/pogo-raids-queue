@@ -107,9 +107,21 @@ Open a **private/incognito browser window**, log into Twitch as the **bot accoun
 https://id.twitch.tv/oauth2/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=https://localhost&response_type=token&scope=user:bot+user:read:chat+user:write:chat
 ```
 
-After authorising, the browser redirects to a broken `https://localhost` page. Copy the token from the address bar — it appears after `#access_token=` and before `&scope`.
+After authorising, copy the token from the address bar — it appears after `#access_token=` and before `&scope`. This is your `OAUTH_TOKEN`.
 
 > **Keep this token secret.** Do not share it or commit it to source control.
+
+---
+
+### 4b. Get an OAuth token for the broadcaster account
+
+Channel point redemptions require a token from the **broadcaster account** (the channel owner). Open a **private/incognito browser window**, log in as the **broadcaster**, then visit:
+
+```
+https://id.twitch.tv/oauth2/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=https://localhost&response_type=token&scope=channel:read:redemptions&force_verify=true
+```
+
+Copy the token the same way. This is your `BROADCASTER_OAUTH_TOKEN`.
 
 ---
 
@@ -126,6 +138,7 @@ CLIENT_ID=your_client_id
 OAUTH_TOKEN=your_bot_account_oauth_token
 BOT_USER_ID=numeric_id_of_bot_account
 CHAT_CHANNEL_USER_ID=numeric_id_of_your_channel
+BROADCASTER_OAUTH_TOKEN=your_broadcaster_account_oauth_token
 ```
 
 The `.env` file is gitignored and will never be committed.

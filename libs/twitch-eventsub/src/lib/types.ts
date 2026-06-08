@@ -15,6 +15,7 @@ export type MessageType = (typeof MessageType)[keyof typeof MessageType];
 /** EventSub subscription types handled by this bot */
 export const SubscriptionType = {
   ChannelChatMessage: 'channel.chat.message',
+  ChannelPointsRedemption: 'channel.channel_points_custom_reward_redemption.add',
 } as const;
 export type SubscriptionType =
   (typeof SubscriptionType)[keyof typeof SubscriptionType];
@@ -67,9 +68,28 @@ export interface ChatMessageEvent {
   channel_points_custom_reward_id?: string;
 }
 
+export interface ChannelPointsRedemptionEvent {
+  id: string;
+  broadcaster_user_id: string;
+  broadcaster_user_login: string;
+  broadcaster_user_name: string;
+  user_id: string;
+  user_login: string;
+  user_name: string;
+  user_input: string;
+  status: string;
+  reward: {
+    id: string;
+    title: string;
+    cost: number;
+    prompt: string;
+  };
+  redeemed_at: string;
+}
+
 export interface NotificationPayload {
   subscriptionType: string;
-  event: ChatMessageEvent;
+  event: ChatMessageEvent | ChannelPointsRedemptionEvent;
 }
 
 export type NotificationHandler = (payload: NotificationPayload) => void;
@@ -79,7 +99,7 @@ export interface TwitchWebSocketMessage {
   payload: {
     session?: SessionPayload['session'];
     subscription?: { type: string };
-    event?: ChatMessageEvent;
+    event?: unknown;
   };
 }
 

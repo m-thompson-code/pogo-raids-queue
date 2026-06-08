@@ -3,6 +3,7 @@ export { MessageType, SubscriptionType } from './lib/types.js';
 export type {
   ChatMessageEvent,
   ChatMessageFragment,
+  ChannelPointsRedemptionEvent,
   NotificationPayload,
   NotificationHandler,
   TwitchWebSocketMessage,

@@ -16,10 +16,6 @@ export const sendChatMessage = async (chatMessage: string): Promise<void> => {
     return;
   }
 
-  // TEMP: suppress chat messages
-  console.log('[chat suppressed]', chatMessage);
-  return;
-
   const response = await fetch('https://api.twitch.tv/helix/chat/messages', {
     method: 'POST',
     headers: {
@@ -93,5 +89,87 @@ export const registerEventSubListeners = async (
   } else {
     const data = (await response.json()) as EventSubSubscriptionResponse;
     console.log(`Subscribed to channel.chat.message [${data.data[0].id}]`);
+  }
+};
+
+/**
+ * Validates the broadcaster OAuth token and subscribes to
+ * `channel.channel_points_custom_reward_redemption.add` on a dedicated
+ * WebSocket session that uses the broadcaster's token.
+ *
+ * Must be called as the `onSessionWelcome` callback of a second `connectBot`
+ * call — NOT on the same session as the bot's chat subscription.
+ */
+export const registerBroadcasterEventSubListeners = async (
+  websocketSessionId: string
+): Promise<void> => {
+  if (!config.broadcasterOauthToken) {
+    console.error('');
+    console.error('⚠️  BROADCASTER_OAUTH_TOKEN is not set — channel point redemptions will not be tracked.');
+    console.error('   To fix this:');
+    console.error('   1. Log into Twitch as the broadcaster account in a private/incognito window');
+    console.error('   2. Visit: https://id.twitch.tv/oauth2/authorize?client_id=' + config.clientId + '&redirect_uri=https://localhost&response_type=token&scope=channel:read:redemptions&force_verify=true');
+    console.error('   3. Authorise and copy the token from the URL (between #access_token= and &scope)');
+    console.error('   4. Add BROADCASTER_OAUTH_TOKEN=<token> to your .env and restart the bot');
+    console.error('');
+    return;
+  }
+
+  const validateRes = await fetch('https://id.twitch.tv/oauth2/validate', {
+    headers: { Authorization: 'OAuth ' + config.broadcasterOauthToken },
+  });
+  if (!validateRes.ok) {
+    console.error('⚠️  BROADCASTER_OAUTH_TOKEN is invalid or expired — channel point redemptions will not be tracked.');
+    console.error('   Regenerate it using step 4b in apps/twitch-bot/README.md.');
+    return;
+  }
+  const validateData = await validateRes.json() as { login: string; scopes: string[] };
+  console.log(`Broadcaster token validated for: ${validateData.login} (scopes: ${validateData.scopes.join(', ')})`);
+  if (!validateData.scopes.includes('channel:read:redemptions') && !validateData.scopes.includes('channel:manage:redemptions')) {
+    console.error('⚠️  BROADCASTER_OAUTH_TOKEN is missing channel:read:redemptions scope — channel point redemptions will not be tracked.');
+    console.error('   Regenerate it using step 4b in apps/twitch-bot/README.md.');
+    return;
+  }
+
+  const cpResponse = await fetch(
+    'https://api.twitch.tv/helix/eventsub/subscriptions',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + config.broadcasterOauthToken,
+        'Client-Id': config.clientId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'channel.channel_points_custom_reward_redemption.add',
+        version: '1',
+        condition: {
+          broadcaster_user_id: config.chatChannelUserId,
+        },
+        transport: {
+          method: 'websocket',
+          session_id: websocketSessionId,
+        },
+      }),
+    }
+  );
+
+  if (cpResponse.status !== 202) {
+    const data = await cpResponse.json();
+    console.error(
+      'Failed to subscribe to channel.channel_points_custom_reward_redemption.add. API call returned status code ' +
+        cpResponse.status
+    );
+    console.error(data);
+    if (cpResponse.status === 403) {
+      console.error('');
+      console.error('   Common causes:');
+      console.error('   • The channel is not Twitch Affiliate or Partner (channel points require Affiliate/Partner status)');
+      console.error('   • The BROADCASTER_OAUTH_TOKEN is from the wrong account (must be from the broadcaster, not the bot)');
+      console.error('');
+    }
+  } else {
+    const data = (await cpResponse.json()) as EventSubSubscriptionResponse;
+    console.log(`Subscribed to channel.channel_points_custom_reward_redemption.add [${data.data[0].id}]`);
   }
 };

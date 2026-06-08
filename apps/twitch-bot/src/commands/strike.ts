@@ -5,6 +5,33 @@ import { getTwitchUserId } from '../api/twitch-api.js';
 import type { ChatMessageEvent } from '../types.js';
 
 /**
+ * Looks up a Twitch user by username, increments (or sets) their strike count,
+ * and sends a confirmation message in chat.
+ *
+ * @param rawTarget  - The Twitch username to strike (leading '@' is stripped)
+ * @param chatter    - The login of the person who triggered the strike (for error replies)
+ * @param setValue   - If provided, sets strikes to this value; otherwise increments by 1
+ */
+export const strikeByUsername = async (
+  rawTarget: string,
+  chatter: string,
+  setValue?: number
+): Promise<void> => {
+  const target = rawTarget.replace(/^@/, '');
+
+  const twitchUserId = await getTwitchUserId(target);
+
+  if (!twitchUserId) {
+    await sendChatMessage(messages.strikeNotFound(chatter, target));
+    return;
+  }
+
+  const count = await strikeUser(target, twitchUserId, setValue);
+
+  await sendChatMessage(messages.strikeConfirm(target, count));
+};
+
+/**
  * Handles the `!strike` chat command (privileged only).
  *
  * Usage:
@@ -26,7 +53,6 @@ export const handleStrikeCommand = async (
     return;
   }
 
-  const target = rawTarget.replace(/^@/, '');
   const rawValue = parts[2]?.trim();
   const isExplicitValue = rawValue !== undefined && rawValue !== '' && /^\d+$/.test(rawValue);
   const setValue = isExplicitValue ? parseInt(rawValue, 10) : undefined;
@@ -36,14 +62,5 @@ export const handleStrikeCommand = async (
     return;
   }
 
-  const twitchUserId = await getTwitchUserId(target);
-
-  if (!twitchUserId) {
-    await sendChatMessage(messages.strikeNotFound(chatter, target));
-    return;
-  }
-
-  const count = await strikeUser(target, twitchUserId, setValue);
-
-  await sendChatMessage(messages.strikeConfirm(target, count));
+  await strikeByUsername(rawTarget, chatter, setValue);
 };

@@ -1,6 +1,7 @@
 import { validateToken } from './api/auth.js';
 import { connectBot } from '@pogo-raid-system/twitch-eventsub';
 import { SubscriptionType } from './types.js';
+import type { ChannelPointsRedemptionEvent } from './types.js';
 import { loadSettings, isCommandEnabled } from './persisted-settings.js';
 import { handleRaidCommand } from './commands/raid.js';
 import { handleClearCommand } from './commands/clear.js';
@@ -11,7 +12,7 @@ import { handleGroupsCommand } from './commands/groups.js';
 import { handleAddCommand } from './commands/add.js';
 import { handleLeaveCommand } from './commands/leave.js';
 import { handleRemoveCommand } from './commands/remove.js';
-import { handleStrikeCommand } from './commands/strike.js';
+import { handleStrikeCommand, strikeByUsername } from './commands/strike.js';
 import { maybeHintRaidCommand, handleHintCooldownCommand, maybeHintCode } from './detectables/hints.js';
 import { handleSpamWindowCommand } from './commands/spam-window.js';
 import { handleEnableCommand, handleDisableCommand } from './commands/enable-disable.js';
@@ -19,8 +20,8 @@ import { handleCommandsCommand } from './commands/commands.js';
 import { checkSpam } from './detectables/spam-detection.js';
 import { FirestoreQueueProvider } from './providers/firestore-queue-provider.js';
 import { isPrivileged } from './permissions.js';
-import { sendChatMessage, registerEventSubListeners } from './api/chat.js';
-// import { messages } from './messages.js'; // re-enable when !code command is re-enabled
+import { sendChatMessage, registerEventSubListeners, registerBroadcasterEventSubListeners } from './api/chat.js';
+import { messages } from './messages.js';
 import { resolveCommand } from './command-aliases.js';
 import { config } from './config.js';
 // To use the in-memory provider instead, swap the import above for:
@@ -46,23 +47,43 @@ import { config } from './config.js';
   const provider = new FirestoreQueueProvider();
   // const provider = new InMemoryQueueProvider();
 
-  connectBot(config.eventSubWebSocketUrl, registerEventSubListeners, ({ subscriptionType, event }) => {
+  // Second WebSocket connection for broadcaster-owned subscriptions (channel points).
+  // Must be separate because Twitch requires all subscriptions on a session to use the same user token.
+  if (config.broadcasterOauthToken) {
+    connectBot(config.eventSubWebSocketUrl, registerBroadcasterEventSubListeners, async ({ subscriptionType, event }) => {
+      if (subscriptionType === SubscriptionType.ChannelPointsRedemption) {
+        const redemption = event as ChannelPointsRedemptionEvent;
+        console.log(`CHANNEL POINTS [${redemption.reward.title}] by ${redemption.user_login} (input: "${redemption.user_input}")`);
+        if (redemption.reward.title.toLowerCase() === 'strike') {
+          const target = redemption.user_input.trim();
+          if (target) {
+            await strikeByUsername(target, redemption.user_login);
+          } else {
+            sendChatMessage(`@${redemption.user_login} please include the Twitch username to strike when redeeming this reward.`);
+          }
+        }
+      }
+    });
+  }
+
+  connectBot(config.eventSubWebSocketUrl, registerEventSubListeners, async ({ subscriptionType, event }) => {
     if (subscriptionType === SubscriptionType.ChannelChatMessage) {
-      const text = event.message.text.trim();
+      const chatEvent = event as import('./types.js').ChatMessageEvent;
+      const text = chatEvent.message.text.trim();
       const command = resolveCommand(text);
 
       if (command) {
-        console.log(`CMD !${command} <${event.chatter_user_login}>`);
+        console.log(`CMD !${command} <${chatEvent.chatter_user_login}>`);
       }
 
       // enable/disable bypass the enabled check intentionally
       if (command === 'enable' || command === 'disable') {
-        if (!isPrivileged(event)) {
-          sendChatMessage(`@${event.chatter_user_login} you do not have permissions for that command`);
+        if (!isPrivileged(chatEvent)) {
+          sendChatMessage(`@${chatEvent.chatter_user_login} you do not have permissions for that command`);
           return;
         }
-        if (command === 'enable') handleEnableCommand(event);
-        else handleDisableCommand(event);
+        if (command === 'enable') handleEnableCommand(chatEvent);
+        else handleDisableCommand(chatEvent);
         return;
       }
 
@@ -71,44 +92,56 @@ import { config } from './config.js';
       }
 
       if (command === 'raid') {
-        handleRaidCommand(event, provider);
-      // } else if (command === 'code') {
-      //   sendChatMessage(messages.hintCode(event.chatter_user_login));
+        handleRaidCommand(chatEvent, provider);
+      } else if (command === 'code') {
+        sendChatMessage(messages.hintCode(chatEvent.chatter_user_login));
+      } else if (command === 'help') {
+        sendChatMessage('Type "!raid your_username" to join raids (no quotes). Please don\'t spam.');
+      } else if (command === 'discord') {
+        sendChatMessage('https://discord.gg/7WACyhUHtb');
+      } else if (command === 'shutdown') {
+        if (!isPrivileged(chatEvent)) {
+          sendChatMessage(`@${chatEvent.chatter_user_login} you do not have permissions for that command`);
+          return;
+        }
+        await sendChatMessage('Shutting down. Goodbye! 👋');
+        process.exit(0);
       } else if (command === 'commands') {
-        handleCommandsCommand(event);
+        handleCommandsCommand(chatEvent);
       } else if (command === 'leave') {
-        handleLeaveCommand(event, provider);
+        handleLeaveCommand(chatEvent, provider);
       } else if (command === 'clear' || command === 'open' || command === 'close' || command === 'list' || command === 'groups' || command === 'add' || command === 'remove' || command === 'strike' || command === 'hintcooldown' || command === 'spamwindow') {
-        if (!isPrivileged(event)) {
-          sendChatMessage(`@${event.chatter_user_login} you do not have permissions for that command`);
+        if (!isPrivileged(chatEvent)) {
+          sendChatMessage(`@${chatEvent.chatter_user_login} you do not have permissions for that command`);
           return;
         }
         if (command === 'clear') {
-          handleClearCommand(event, provider);
+          handleClearCommand(chatEvent, provider);
         } else if (command === 'open') {
-          handleOpenCommand(event);
+          handleOpenCommand(chatEvent);
         } else if (command === 'close') {
-          handleCloseCommand(event);
+          handleCloseCommand(chatEvent);
         } else if (command === 'list') {
-          handleListCommand(event, provider);
+          handleListCommand(chatEvent, provider);
         } else if (command === 'groups') {
-          handleGroupsCommand(event, provider);
+          handleGroupsCommand(chatEvent, provider);
         } else if (command === 'add') {
-          handleAddCommand(event, provider);
+          handleAddCommand(chatEvent, provider);
         } else if (command === 'remove') {
-          handleRemoveCommand(event, provider);
+          handleRemoveCommand(chatEvent, provider);
         } else if (command === 'strike') {
-          handleStrikeCommand(event);
+          handleStrikeCommand(chatEvent);
         } else if (command === 'hintcooldown') {
-          handleHintCooldownCommand(event);
+          handleHintCooldownCommand(chatEvent);
         } else if (command === 'spamwindow') {
-          handleSpamWindowCommand(event);
+          handleSpamWindowCommand(chatEvent);
         }
       } else {
         if (text.startsWith('!')) return;
-        if (checkSpam(event)) return;
-        maybeHintRaidCommand(event);
-        maybeHintCode(event);
+        if (chatEvent.chatter_user_id === config.botUserId) return;
+        if (checkSpam(chatEvent)) return;
+        maybeHintRaidCommand(chatEvent);
+        maybeHintCode(chatEvent);
       }
     }
   });

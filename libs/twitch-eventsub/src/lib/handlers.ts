@@ -1,5 +1,5 @@
 import { MessageType } from './types.js';
-import type { TwitchWebSocketMessage, NotificationHandler } from './types.js';
+import type { TwitchWebSocketMessage, NotificationHandler, NotificationPayload } from './types.js';
 
 /**
  * Returns a message handler pre-bound to the given callbacks.
@@ -31,7 +31,7 @@ export const createMessageHandler =
           onNotification({
             subscriptionType: data.metadata.subscription_type,
             event: data.payload.event,
-          });
+          } as NotificationPayload);
         }
         break;
 

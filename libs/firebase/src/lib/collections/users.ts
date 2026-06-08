@@ -53,6 +53,18 @@ export const upsertUser = async (params: RaidParams): Promise<void> => {
  * @param twitchUserId   - The Twitch user ID (document key)
  * @param value          - If provided, sets strikes to this value; otherwise increments by 1
  */
+/**
+ * Fetches a user document from the `users` collection by Twitch user ID.
+ * Returns null if the user has never raided before.
+ *
+ * @param twitchUserId - The Twitch numeric user ID (document key)
+ */
+export const getUser = async (twitchUserId: string): Promise<import('../core/types.js').RaidUser | null> => {
+  const doc = await getDb().collection('users').doc(twitchUserId).get();
+  if (!doc.exists) return null;
+  return doc.data() as import('../core/types.js').RaidUser;
+};
+
 export const strikeUser = async (
   twitchUsername: string,
   twitchUserId: string,

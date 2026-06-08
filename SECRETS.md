@@ -15,6 +15,7 @@ BOT_USER_ID=
 CHAT_CHANNEL_USER_ID=
 FIREBASE_PROJECT_ID=hydro-pogo-raids
 GOOGLE_APPLICATION_CREDENTIALS=apps/twitch-bot/service-account.json
+BROADCASTER_OAUTH_TOKEN=
 ```
 
 ### Where to get each value
@@ -22,11 +23,12 @@ GOOGLE_APPLICATION_CREDENTIALS=apps/twitch-bot/service-account.json
 | Variable | Where to find it |
 |---|---|
 | `CLIENT_ID` | [Twitch Developer Console](https://dev.twitch.tv/console/apps) → your app → **Client ID** |
-| `OAUTH_TOKEN` | Generate at [twitchtokengenerator.com](https://twitchtokengenerator.com) using your bot account. Needs `chat:read` and `chat:edit` scopes. Prefix with `oauth:` |
+| `OAUTH_TOKEN` | Generate at [twitchtokengenerator.com](https://twitchtokengenerator.com) using your **bot account**. Needs `chat:read`, `chat:edit`, `user:bot`, `user:read:chat`, `user:write:chat` scopes. |
 | `BOT_USER_ID` | The numeric Twitch user ID of the bot account. Look it up at [https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/](https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/) |
 | `CHAT_CHANNEL_USER_ID` | Same tool — the numeric ID of the channel the bot should join |
 | `FIREBASE_PROJECT_ID` | [Firebase Console](https://console.firebase.google.com) → your project → **Project settings** → Project ID |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Path to the service account JSON (see below) |
+| `BROADCASTER_OAUTH_TOKEN` | Generate using the **broadcaster account** with `channel:read:redemptions` scope. Use the OAuth URL in `apps/twitch-bot/README.md` step 4b. |
 
 ---
 
