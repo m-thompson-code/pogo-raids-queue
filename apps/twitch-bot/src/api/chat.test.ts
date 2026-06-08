@@ -21,6 +21,16 @@ beforeEach(() => {
 });
 
 describe('sendChatMessage', () => {
+  it('blocks messages starting with / and does not call fetch', async () => {
+    await sendChatMessage('/ban someuser');
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('blocks messages with leading whitespace before /', async () => {
+    await sendChatMessage('  /timeout someuser');
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
   it('posts to the correct endpoint with auth headers and body', async () => {
     mockFetch.mockResolvedValueOnce({ status: 200 });
 

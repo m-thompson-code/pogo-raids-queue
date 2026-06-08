@@ -11,11 +11,15 @@ import type { EventSubSubscriptionResponse } from '@pogo-raid-system/twitch-even
  * @param chatMessage - The text content to post in the channel chat
  */
 export const sendChatMessage = async (chatMessage: string): Promise<void> => {
-  // TEMP: chat posting disabled
+  if (chatMessage.trimStart().startsWith('/')) {
+    console.error(`sendChatMessage blocked: message starts with '/' — "${chatMessage}"`);
+    return;
+  }
+
+  // TEMP: suppress chat messages
   console.log('[chat suppressed]', chatMessage);
   return;
 
-  /* eslint-disable no-unreachable */
   const response = await fetch('https://api.twitch.tv/helix/chat/messages', {
     method: 'POST',
     headers: {
@@ -37,7 +41,6 @@ export const sendChatMessage = async (chatMessage: string): Promise<void> => {
   } else {
     console.log('Sent chat message: ' + chatMessage);
   }
-  /* eslint-enable no-unreachable */
 };
 
 /**
