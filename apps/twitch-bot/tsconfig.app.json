@@ -10,10 +10,10 @@
   "exclude": ["src/**/*.test.ts"],
   "references": [
     {
-      "path": "../../libs/firebase/tsconfig.lib.json"
+      "path": "../../libs/shared/firebase/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/twitch-eventsub/tsconfig.lib.json"
+      "path": "../../libs/server/twitch-eventsub/tsconfig.lib.json"
     }
   ]
 }

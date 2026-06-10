@@ -98,7 +98,7 @@ import { config } from './config.js';
       } else if (command === 'help') {
         sendChatMessage('Type "!raid your_username" to join raids (no quotes). Please don\'t spam.');
       } else if (command === 'discord') {
-        sendChatMessage('https://discord.gg/7WACyhUHtb');
+        sendChatMessage('https://discord.gg/AARRcwjChD');
       } else if (command === 'shutdown') {
         if (!isPrivileged(chatEvent)) {
           sendChatMessage(`@${chatEvent.chatter_user_login} you do not have permissions for that command`);

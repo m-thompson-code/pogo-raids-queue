@@ -5,7 +5,7 @@
   "scripts": {
     "start": "npx nx build twitch-bot --output-style=stream && node --env-file=.env apps/twitch-bot/dist/main.js",
     "dev": "tsx watch --env-file=.env apps/twitch-bot/src/main.ts",
-    "test": "tsx --test apps/twitch-bot/src/**/*.test.ts libs/firebase/src/**/*.test.ts",
+    "test": "npx nx run-many -t test --all",
     "serve": "npx nx serve client",
     "deploy": "npx nx build client --configuration=production && npx firebase deploy --only hosting"
   },
@@ -50,7 +50,9 @@
   "workspaces": [
     "packages/*",
     "apps/*",
-    "libs/*"
+    "libs/*",
+    "libs/shared/*",
+    "libs/server/*"
   ],
   "dependencies": {
     "@angular/common": "~21.2.0",

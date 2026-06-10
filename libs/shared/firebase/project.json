@@ -1,0 +1,15 @@
+{
+  "name": "firebase",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/firebase/src",
+  "projectType": "library",
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{workspaceRoot}/coverage/libs/shared/firebase"],
+      "options": {
+        "configFile": "libs/shared/firebase/vitest.config.ts"
+      }
+    }
+  }
+}
