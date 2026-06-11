@@ -41,7 +41,6 @@ const save = (): void => {
 export const loadSettings = (): void => {
   if (!existsSync(CONFIG_PATH)) {
     save();
-    console.log(`[config] Created ${CONFIG_PATH} with defaults`);
     return;
   }
   try {

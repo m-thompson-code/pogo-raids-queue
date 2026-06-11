@@ -65,8 +65,9 @@ export interface ChatMessageEvent {
   badges: Array<{ set_id: string; id: string; info: string }>;
   message_type: string;
   cheer?: { bits: number };
-  reply?: unknown;
+  reply?: { parent_user_id: string; parent_message_id: string; parent_message_body: string };
   channel_points_custom_reward_id?: string;
+  is_first_message?: boolean;
 }
 
 export interface ChannelPointsRedemptionEvent {

@@ -25,9 +25,6 @@ export const createMessageHandler =
     switch (data.metadata.message_type) {
       case MessageType.SessionWelcome:
         if (data.payload.session) {
-          console.log(
-            `WebSocket session established [${data.payload.session.id}]`,
-          );
           onSessionWelcome(data.payload.session.id);
         }
         break;

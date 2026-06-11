@@ -3,6 +3,7 @@ import { messages } from '../messages.js';
 import { strikeUser } from '@pogo-raid-system/firebase';
 import { getTwitchUserId } from '../api/twitch-api.js';
 import type { ChatMessageEvent } from '../types.js';
+import { unmarkRaidSuccess, markFirstTimeChatter } from '../detectables/shared.js';
 
 /**
  * Looks up a Twitch user by username, increments (or sets) their strike count,
@@ -27,6 +28,9 @@ export const strikeByUsername = async (
   }
 
   const count = await strikeUser(target, twitchUserId, setValue);
+
+  unmarkRaidSuccess(twitchUserId);
+  markFirstTimeChatter(twitchUserId);
 
   await sendChatMessage(messages.strikeConfirm(target, count));
 };

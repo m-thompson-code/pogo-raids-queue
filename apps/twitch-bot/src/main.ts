@@ -13,7 +13,8 @@ import { handleAddCommand } from './commands/add.js';
 import { handleLeaveCommand } from './commands/leave.js';
 import { handleRemoveCommand } from './commands/remove.js';
 import { handleStrikeCommand, strikeByUsername } from './commands/strike.js';
-import { maybeHintRaidCommand, handleHintCooldownCommand, maybeHintCode } from './detectables/hints.js';
+import { handleHintCooldownCommand } from './detectables/hints.js';
+import { runDetectables } from './detectables/main.js';
 import { handleSpamWindowCommand } from './commands/spam-window.js';
 import { handleEnableCommand, handleDisableCommand } from './commands/enable-disable.js';
 import { handleCommandsCommand } from './commands/commands.js';
@@ -24,6 +25,7 @@ import { sendChatMessage, registerEventSubListeners, registerBroadcasterEventSub
 import { messages } from './messages.js';
 import { resolveCommand } from './command-aliases.js';
 import { config } from './config.js';
+import { markFirstTimeChatter } from './detectables/shared.js';
 // To use the in-memory provider instead, swap the import above for:
 // import { InMemoryQueueProvider } from './providers/in-memory-queue-provider.js';
 
@@ -72,6 +74,10 @@ import { config } from './config.js';
       const text = chatEvent.message.text.trim();
       const command = resolveCommand(text);
 
+      // Track first-time chatters immediately, before any command handling,
+      // so the flag is available for both command and non-command paths.
+      if (chatEvent.is_first_message) markFirstTimeChatter(chatEvent.chatter_user_id);
+
       if (command) {
         console.log(`CMD !${command} <${chatEvent.chatter_user_login}>`);
       }
@@ -91,12 +97,20 @@ import { config } from './config.js';
         return;
       }
 
+      // Catch malformed !raid attempts from first-time chatters before normal dispatch.
+      // e.g. "!raidusername" (no space) or "! raid" (space between ! and command).
+      if (!command &&
+          (/^!raid\S/i.test(text) || /^!\s+r(?:aid)?\b/i.test(text))) {
+        sendChatMessage(`@${chatEvent.chatter_user_login}  did you mean !raid?`);
+        return;
+      }
+
       if (command === 'raid') {
         handleRaidCommand(chatEvent, provider);
       } else if (command === 'code') {
-        sendChatMessage(messages.hintCode(chatEvent.chatter_user_login));
+        sendChatMessage(messages.hintAddCodeFirst);
       } else if (command === 'help') {
-        sendChatMessage('Type "!raid your_username" to join raids (no quotes). Please don\'t spam.');
+        sendChatMessage(messages.help);
       } else if (command === 'discord') {
         sendChatMessage('https://discord.gg/AARRcwjChD');
       } else if (command === 'shutdown') {
@@ -140,8 +154,7 @@ import { config } from './config.js';
         if (text.startsWith('!')) return;
         if (chatEvent.chatter_user_id === config.botUserId) return;
         if (checkSpam(chatEvent)) return;
-        maybeHintRaidCommand(chatEvent);
-        maybeHintCode(chatEvent);
+        runDetectables(chatEvent);
       }
     }
   });

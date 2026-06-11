@@ -1,5 +1,4 @@
 import { config } from '../config.js';
-import type { EventSubSubscriptionResponse } from '@pogo-raid-system/twitch-eventsub';
 
 /**
  * Sends a chat message to the configured channel via the Twitch Helix API.
@@ -87,8 +86,8 @@ export const registerEventSubListeners = async (
     console.error(data);
     process.exit(1);
   } else {
-    const data = (await response.json()) as EventSubSubscriptionResponse;
-    console.log(`Subscribed to channel.chat.message [${data.data[0].id}]`);
+    await response.json();
+    console.log('Bot connected. Listening for chat messages.');
   }
 };
 
@@ -124,7 +123,6 @@ export const registerBroadcasterEventSubListeners = async (
     return;
   }
   const validateData = await validateRes.json() as { login: string; scopes: string[] };
-  console.log(`Broadcaster token validated for: ${validateData.login} (scopes: ${validateData.scopes.join(', ')})`);
   if (!validateData.scopes.includes('channel:read:redemptions') && !validateData.scopes.includes('channel:manage:redemptions')) {
     console.error('⚠️  BROADCASTER_OAUTH_TOKEN is missing channel:read:redemptions scope — channel point redemptions will not be tracked.');
     console.error('   Regenerate it using step 4b in apps/twitch-bot/README.md.');
@@ -169,7 +167,7 @@ export const registerBroadcasterEventSubListeners = async (
       console.error('');
     }
   } else {
-    const data = (await cpResponse.json()) as EventSubSubscriptionResponse;
-    console.log(`Subscribed to channel.channel_points_custom_reward_redemption.add [${data.data[0].id}]`);
+    await cpResponse.json();
+    console.log('Channel points connected. Listening for reward redemptions.');
   }
 };

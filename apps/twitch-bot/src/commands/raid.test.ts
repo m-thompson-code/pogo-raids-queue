@@ -11,11 +11,13 @@ vi.mock('../messages.js', () => ({
   },
 }));
 vi.mock('../queue-state.js', () => ({ isQueueOpen: vi.fn() }));
-vi.mock('../detectables/hints.js', () => ({ markRaidSuccess: vi.fn() }));
+vi.mock('../detectables/shared.js', () => ({ markRaidSuccess: vi.fn(), isFirstTimeChatter: vi.fn().mockReturnValue(false) }));
+vi.mock('@pogo-raid-system/firebase', () => ({ getUser: vi.fn() }));
 
 import { sendChatMessage } from '../api/chat.js';
 import { isQueueOpen } from '../queue-state.js';
-import { markRaidSuccess } from '../detectables/hints.js';
+import { markRaidSuccess } from '../detectables/shared.js';
+import { getUser } from '@pogo-raid-system/firebase';
 import type { QueueProvider } from '../providers/queue-provider.js';
 
 const mockProvider = (): QueueProvider => ({
@@ -46,8 +48,20 @@ describe('handleRaidCommand', () => {
 
   it('sends usage when no pogo username provided', async () => {
     vi.mocked(isQueueOpen).mockReturnValue(true);
+    vi.mocked(getUser).mockResolvedValue(null);
     await handleRaidCommand(makeEvent('!raid') as any, mockProvider());
     expect(sendChatMessage).toHaveBeenCalledWith('raidMissingUsername:moo');
+  });
+
+  it('re-uses stored pogo username when no argument provided', async () => {
+    vi.mocked(isQueueOpen).mockReturnValue(true);
+    vi.mocked(getUser).mockResolvedValue({ pogoUsername: 'TrainerAsh' } as any);
+    const provider = mockProvider();
+    await handleRaidCommand(makeEvent('!raid') as any, provider);
+    expect(provider.upsertUser).toHaveBeenCalledOnce();
+    expect(provider.addToQueue).toHaveBeenCalledOnce();
+    expect(markRaidSuccess).toHaveBeenCalledWith('u1');
+    expect(sendChatMessage).toHaveBeenCalledWith('raidAdded:TrainerAsh');
   });
 
   it('rejects invalid pogo username characters', async () => {

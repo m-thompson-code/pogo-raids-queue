@@ -97,23 +97,14 @@ describe('messages', () => {
   });
 
   describe('hints', () => {
-    it('hintRaidCommand mentions username and !raid', () => {
-      const msg = messages.hintRaidCommand('moo');
-      expect(msg).toContain('@moo');
-      expect(msg).toContain('!raid');
+    it('hintStreamerWontAdd mentions the friend code', () => {
+      expect(messages.hintStreamerWontAdd).toContain('835766986460');
     });
-    it('hintHowToJoin mentions username and friend code', () => {
-      const msg = messages.hintHowToJoin('moo');
-      expect(msg).toContain('@moo');
-      expect(msg).toContain('8357 6698 6460');
+    it('hintAddCodeFirst mentions the friend code', () => {
+      expect(messages.hintAddCodeFirst).toContain('835766986460');
     });
-    it('hintCode returns the friend code', () => {
-      expect(messages.hintCode('moo')).toContain('8357 6698 6460');
-    });
-    it('hintAddStreamer mentions username and friend code', () => {
-      const msg = messages.hintAddStreamer('moo');
-      expect(msg).toContain('@moo');
-      expect(msg).toContain('8357 6698 6460');
+    it('hintUseRaidCommand mentions !raid', () => {
+      expect(messages.hintUseRaidCommand).toContain('!raid');
     });
   });
 

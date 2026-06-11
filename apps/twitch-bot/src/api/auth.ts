@@ -26,6 +26,4 @@ export const validateToken = async (): Promise<void> => {
     console.error(data);
     process.exit(1);
   }
-
-  console.log('Validated token.');
 };

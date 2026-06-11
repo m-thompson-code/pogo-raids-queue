@@ -5,16 +5,22 @@
 // Edit this file to change what the bot says.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { FRIEND_CODE_RAW } from './friend-code.js';
+
 export const messages = {
   // !raid
   raidQueueClosed: (username: string) =>
     `@${username} Raids are currently closed.`,
   raidMissingUsername: (username: string) =>
-    `@${username} !raid YourPogoUsername to join the queue!`,
+    `@${username} !raid your_pogo_username to join the queue! Make sure you added the host ${FRIEND_CODE_RAW} and told them your pogo username first.`,
   raidInvalidUsername: (username: string) =>
     `@${username} Your pogo username includes an invalid character.`,
   raidAdded: (pogoUsername: string) =>
     `${pogoUsername} added to the raid queue!`,
+  raidAddedUsernameSaved: (pogoUsername: string) =>
+    `${pogoUsername} added to the raid queue! Username saved — next time you can just use !raid`,
+  raidAddedFirstTime: (pogoUsername: string) =>
+    `${pogoUsername} added to the raid queue! Make sure you have added ${FRIEND_CODE_RAW} and that the host has added you back.`,
 
   // !leave
   leaveRemoved: (pogoUsername: string) =>
@@ -44,7 +50,7 @@ export const messages = {
 
   // !open
   openSuccess: (username: string) =>
-    `@${username} The queue is now open! !raid YourPogoUsername to join.`,
+    `@${username} The queue is now open! !raid your_pogo_username to join.`,
 
   // !close
   closeSuccess: (username: string) =>
@@ -59,14 +65,14 @@ export const messages = {
     `@${target} you now have ${count} strike${count === 1 ? '' : 's'}.${count >= 3 ? ' You will be timed out or banned if you receive more.' : ''}`,
 
   // hints
-  hintRaidCommand: (username: string) =>
-    `@${username} !raid YourPogoUsername to join the queue!`,
-  hintHowToJoin: (username: string) =>
-    `@${username} Friend request using code 8357 6698 6460, then !raid YourPogoUsername to join the queue!`,
-  hintCode: (_username: string) =>
-    `8357 6698 6460`,
-  hintAddStreamer: (username: string) =>
-    `@${username} You need to add the streamer! Send a friend request using code 8357 6698 6460, then !raid YourPogoUsername to join the queue.`,
+  hintStreamerWontAdd:
+    `Host will not add your code, add ${FRIEND_CODE_RAW} instead and post your pogo username`,
+  hintAddCodeFirst:
+    `Add ${FRIEND_CODE_RAW} and then use !raid to join queue`,
+  hintUseRaidCommand:
+    `!raid your_pogo_username. Use !help for more information`,
+  help:
+    `Add the host ${FRIEND_CODE_RAW} and tell host your username. Use !raid your_pogo_username to join the queue`,
 
   // spam detection
   spamWarning: (username: string) =>

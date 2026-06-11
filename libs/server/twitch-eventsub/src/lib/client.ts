@@ -21,9 +21,7 @@ export const createWebSocketClient = (
 
   client.on('error', console.error);
 
-  client.on('open', () => {
-    console.log('WebSocket connection opened to ' + url);
-  });
+  client.on('open', () => {/* ... */});
 
   client.on('message', (data) => {
     handleMessage(JSON.parse(data.toString()) as TwitchWebSocketMessage);
