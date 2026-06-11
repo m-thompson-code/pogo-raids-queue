@@ -156,6 +156,13 @@ describe('involvesCode', () => {
       'add me 123412341234',
       'invite me 3456 3456 3456',
       'add me 3456 3456 3456',
+      'what is your fc',
+      'my fc is 1234',
+      'fc?',
+      'send fc please',
+      'can you send a friend request',
+      'friend request me',
+      'sent you a friend request',
     ];
     for (const msg of matching) {
       it(`"${msg}"`, () => expect(involvesCode(msg.toLowerCase())).toBe(true));

@@ -70,9 +70,17 @@
     font-size: 1.15rem;
   }
 
+  &__last-cleared {
+    font-size: 0.8rem;
+    color: var(--label-color);
+    margin: 0;
+  }
+
   &__toolbar {
     display: flex;
     gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
   }
 }
 
@@ -90,9 +98,16 @@
   outline: none;
   transition: background 0.15s, color 0.15s;
 
-  &:hover {
+  &:hover,
+  &:active {
     background: var(--btn-hover-bg);
     color: var(--btn-hover-color);
+  }
+
+  &:active {
+    background: #9147ff;
+    color: #fff;
+    border-color: #9147ff;
   }
 
   &--danger {
@@ -123,12 +138,45 @@
   }
 }
 
+// ── Add user inline form ───────────────────────────────────────────────────
+
+.toolbar-add {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+
+  &__input {
+    padding: 0.45rem 0.75rem;
+    font-size: 1rem;
+    border: 1px solid var(--btn-border);
+    border-radius: 0.4rem;
+    background: var(--pill-bg);
+    color: var(--pill-color);
+    outline: none;
+    width: 12rem;
+    transition: border-color 0.15s;
+
+    &::placeholder {
+      color: var(--label-color);
+    }
+
+    &:focus {
+      border-color: #9147ff;
+    }
+  }
+
+  &__btn {
+    white-space: nowrap;
+  }
+}
+
 // ── Groups ─────────────────────────────────────────────────────────────────
 
 .group {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  margin-top: 0.75rem;
 
   &__header {
     display: flex;
@@ -181,7 +229,13 @@
     color: var(--pill-invited-color);
   }
 
-  &:hover {
+  &--copied {
+    background: #9147ff;
+    color: #fff;
+  }
+
+  &:hover,
+  &:active {
     background: #9147ff;
     color: #fff;
   }

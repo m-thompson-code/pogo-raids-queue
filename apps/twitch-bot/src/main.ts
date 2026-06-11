@@ -2,7 +2,7 @@ import { validateToken } from './api/auth.js';
 import { connectBot } from '@pogo-raid-system/twitch-eventsub';
 import { SubscriptionType } from './types.js';
 import type { ChannelPointsRedemptionEvent } from './types.js';
-import { loadSettings, isCommandEnabled } from './persisted-settings.js';
+import { loadSettings, isCommandEnabled, getIntervalMessageMs, getInfoCooldownMs, getIntervalPromoMs } from './persisted-settings.js';
 import { handleRaidCommand } from './commands/raid.js';
 import { handleClearCommand } from './commands/clear.js';
 import { handleOpenCommand } from './commands/open.js';
@@ -11,6 +11,7 @@ import { handleListCommand } from './commands/list.js';
 import { handleGroupsCommand } from './commands/groups.js';
 import { handleAddCommand } from './commands/add.js';
 import { handleLeaveCommand } from './commands/leave.js';
+import { handleInvitedCommand } from './commands/invited.js';
 import { handleRemoveCommand } from './commands/remove.js';
 import { handleStrikeCommand, strikeByUsername } from './commands/strike.js';
 import { handleHintCooldownCommand } from './detectables/hints.js';
@@ -25,7 +26,7 @@ import { sendChatMessage, registerEventSubListeners, registerBroadcasterEventSub
 import { messages } from './messages.js';
 import { resolveCommand } from './command-aliases.js';
 import { config } from './config.js';
-import { markFirstTimeChatter, hydrateQueueMemory, setFirestoreListenerActive } from './detectables/shared.js';
+import { hydrateQueueMemory, setFirestoreListenerActive } from './detectables/shared.js';
 // To use the in-memory provider instead, swap the import above for:
 // import { InMemoryQueueProvider } from './providers/in-memory-queue-provider.js';
 
@@ -45,6 +46,18 @@ import { markFirstTimeChatter, hydrateQueueMemory, setFirestoreListenerActive } 
 (async () => {
   loadSettings();
   await validateToken();
+
+  const intervalMs = getIntervalMessageMs();
+  if (intervalMs > 0) {
+    setInterval(() => sendChatMessage(messages.intervalReminder), intervalMs);
+  }
+
+  const intervalPromoMs = getIntervalPromoMs();
+  if (intervalPromoMs > 0) {
+    setInterval(() => sendChatMessage(messages.intervalPromo), intervalPromoMs);
+  }
+
+  const infoCooldownMap = new Map<string, number>();
 
   // Subscribe to live Firestore queue changes so in-memory state stays in sync
   // with updates made by the client (e.g. removing entries via the web UI).
@@ -88,10 +101,6 @@ import { markFirstTimeChatter, hydrateQueueMemory, setFirestoreListenerActive } 
       const text = chatEvent.message.text.trim();
       const command = resolveCommand(text);
 
-      // Track first-time chatters immediately, before any command handling,
-      // so the flag is available for both command and non-command paths.
-      if (chatEvent.is_first_message) markFirstTimeChatter(chatEvent.chatter_user_id);
-
       if (command) {
         console.log(`CMD !${command} <${chatEvent.chatter_user_login}>`);
       }
@@ -107,26 +116,32 @@ import { markFirstTimeChatter, hydrateQueueMemory, setFirestoreListenerActive } 
         return;
       }
 
+      // Check if command was disabled using !disable
       if (command && !isCommandEnabled(command)) {
         return;
       }
 
-      // Catch malformed !raid attempts from first-time chatters before normal dispatch.
-      // e.g. "!raidusername" (no space) or "! raid" (space between ! and command).
+      // Catch malformed !raid attempts
+      // e.g. "!raidusername" (no space), "! raid" (space between ! and command), "!rait".
       if (!command &&
-          (/^!raid\S/i.test(text) || /^!\s+r(?:aid)?\b/i.test(text))) {
+          (/^!raid\S/i.test(text) || /^!\s+r(?:aid)?\b/i.test(text) || /^!rait\b/i.test(text))) {
         sendChatMessage(`@${chatEvent.chatter_user_login}  did you mean !raid?`);
         return;
       }
 
       if (command === 'raid') {
         handleRaidCommand(chatEvent);
-      } else if (command === 'code') {
-        sendChatMessage(messages.hintAddCodeFirst);
-      } else if (command === 'help') {
-        sendChatMessage(messages.help);
-      } else if (command === 'discord') {
-        sendChatMessage('https://discord.gg/AARRcwjChD');
+      } else if (command === 'code' || command === 'help' || command === 'discord' || command === 'tiktok') {
+        const cooldownMs = getInfoCooldownMs();
+        const now = Date.now();
+        const lastSent = infoCooldownMap.get(command) ?? 0;
+        if (cooldownMs === 0 || now - lastSent >= cooldownMs) {
+          infoCooldownMap.set(command, now);
+          if (command === 'code') sendChatMessage(messages.hintAddCodeFirst);
+          else if (command === 'help') sendChatMessage(messages.help);
+          else if (command === 'discord') sendChatMessage('https://discord.gg/AARRcwjChD');
+          else if (command === 'tiktok') sendChatMessage('https://www.tiktok.com/@poketrainerhydro');
+        }
       } else if (command === 'shutdown') {
         if (!isPrivileged(chatEvent)) {
           sendChatMessage(`@${chatEvent.chatter_user_login} you do not have permissions for that command`);
@@ -138,6 +153,8 @@ import { markFirstTimeChatter, hydrateQueueMemory, setFirestoreListenerActive } 
         handleCommandsCommand(chatEvent);
       } else if (command === 'leave') {
         handleLeaveCommand(chatEvent);
+      } else if (command === 'invited') {
+        handleInvitedCommand(chatEvent);
       } else if (command === 'clear' || command === 'open' || command === 'close' || command === 'list' || command === 'groups' || command === 'add' || command === 'remove' || command === 'strike' || command === 'hintcooldown' || command === 'spamwindow') {
         if (!isPrivileged(chatEvent)) {
           sendChatMessage(`@${chatEvent.chatter_user_login} you do not have permissions for that command`);

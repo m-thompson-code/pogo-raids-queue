@@ -5,11 +5,13 @@ import { runDetectables, detectHint } from './main.js';
 vi.mock('../api/chat.js', () => ({ sendChatMessage: vi.fn() }));
 vi.mock('../queue-state.js', () => ({ isQueueOpen: vi.fn() }));
 vi.mock('../persisted-settings.js', () => ({ getHintCooldownMs: vi.fn() }));
+vi.mock('@pogo-raid-system/firebase', () => ({ getUser: vi.fn() }));
 
 import { sendChatMessage } from '../api/chat.js';
 import { isQueueOpen } from '../queue-state.js';
 import { getHintCooldownMs } from '../persisted-settings.js';
-import { successfulRaiders, firstTimeChatters } from './shared.js';
+import { getUser } from '@pogo-raid-system/firebase';
+import { successfulRaiders, firstTimeChatters, usersThatHaveRaidedBefore } from './shared.js';
 import { messages } from '../messages.js';
 import type { ChatMessageEvent } from '../types.js';
 
@@ -19,7 +21,6 @@ const makeEvent = (
     userId = 'u1',
     badges = [] as ChatMessageEvent['badges'],
     reply = undefined as ChatMessageEvent['reply'],
-    isFirstMessage = false,
     broadcasterUserId = 'b1',
   } = {}
 ): ChatMessageEvent => ({
@@ -35,15 +36,18 @@ const makeEvent = (
   message_type: 'text',
   badges,
   reply,
-  is_first_message: isFirstMessage,
 });
 
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(isQueueOpen).mockReturnValue(true);
   vi.mocked(getHintCooldownMs).mockReturnValue(0);
+  // Default: user has raided before (raidCount 1) → not a first-time chatter.
+  // Tests that need the first-time path override getUser or pre-populate firstTimeChatters.
+  vi.mocked(getUser).mockResolvedValue({ twitchUserId: 'u1', raidCount: 1 } as import('@pogo-raid-system/firebase').RaidUser);
   successfulRaiders.clear();
   firstTimeChatters.clear();
+  usersThatHaveRaidedBefore.clear();
 });
 
 // ---------------------------------------------------------------------------
@@ -65,7 +69,7 @@ describe('early-exit guards', () => {
   });
 
   it('continues when replying to the broadcaster', async () => {
-    firstTimeChatters.add('u1');
+    vi.mocked(getUser).mockResolvedValue(null);
     await runDetectables(
       makeEvent('add me', { reply: { parent_user_id: 'b1', parent_message_id: '', parent_message_body: '' }, broadcasterUserId: 'b1' })
     );
@@ -93,7 +97,7 @@ describe('early-exit guards', () => {
   });
 
   it('respects hint cooldown', async () => {
-    firstTimeChatters.add('u1');
+    vi.mocked(getUser).mockResolvedValue(null);
 
     vi.mocked(getHintCooldownMs).mockReturnValue(0);
     await runDetectables(makeEvent('add me'));
@@ -107,8 +111,62 @@ describe('early-exit guards', () => {
 });
 
 // ---------------------------------------------------------------------------
-// firstTimeChatters registration — now the main event handler's responsibility;
-// detectHint/runDetectables rely on the set being pre-populated by the caller.
+// firstTimeChatters — DB-based detection via runDetectables
+// ---------------------------------------------------------------------------
+
+describe('first-time chatter detection via Firebase', () => {
+  it('sends help when user has no DB record', async () => {
+    vi.mocked(getUser).mockResolvedValue(null);
+    await runDetectables(makeEvent('add me'));
+    expect(sendChatMessage).toHaveBeenCalledWith(messages.help);
+  });
+
+  it('sends help when user exists but raidCount is 0', async () => {
+    vi.mocked(getUser).mockResolvedValue({ twitchUserId: 'u1', raidCount: 0 } as import('@pogo-raid-system/firebase').RaidUser);
+    await runDetectables(makeEvent('add me'));
+    expect(sendChatMessage).toHaveBeenCalledWith(messages.help);
+  });
+
+  it('does not send help when user has raidCount >= 1', async () => {
+    // default mock returns raidCount: 1
+    await runDetectables(makeEvent('add me'));
+    expect(sendChatMessage).not.toHaveBeenCalled();
+  });
+
+  it('caches false (never raided) and does not re-query on subsequent messages', async () => {
+    vi.mocked(getUser).mockResolvedValue(null);
+    await runDetectables(makeEvent('add me'));
+    await runDetectables(makeEvent('add me'));
+    expect(getUser).toHaveBeenCalledTimes(1);
+    expect(sendChatMessage).toHaveBeenCalledTimes(2);
+  });
+
+  it('caches true (has raided) and does not re-query on subsequent messages', async () => {
+    await runDetectables(makeEvent('add me'));
+    vi.mocked(getUser).mockClear();
+    await runDetectables(makeEvent('add me'));
+    expect(getUser).not.toHaveBeenCalled();
+    expect(sendChatMessage).not.toHaveBeenCalled();
+  });
+
+  it('skips DB lookup when user is already cached as false (never raided)', async () => {
+    usersThatHaveRaidedBefore.set('u1', false);
+    firstTimeChatters.add('u1');
+    await runDetectables(makeEvent('add me'));
+    expect(getUser).not.toHaveBeenCalled();
+    expect(sendChatMessage).toHaveBeenCalledWith(messages.help);
+  });
+
+  it('skips DB lookup when user is already cached as true (has raided)', async () => {
+    usersThatHaveRaidedBefore.set('u1', true);
+    await runDetectables(makeEvent('add me'));
+    expect(getUser).not.toHaveBeenCalled();
+    expect(sendChatMessage).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// firstTimeChatters — detectHint reads the in-memory set (pure, no I/O)
 // ---------------------------------------------------------------------------
 
 describe('firstTimeChatters tracking', () => {

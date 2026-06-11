@@ -41,8 +41,8 @@ export interface QueueEntry {
   pogoUsername: string;
   isSubscriber: boolean;
   isVip: boolean;
-  /** Whether the user has joined the queue or been invited */
-  status: 'joined' | 'invited';
+  /** Whether the user has joined the queue, been invited, or been copied */
+  status: 'joined' | 'invited' | 'copied';
   /** Timestamp when the user joined (or re-joined) the current queue */
   joinedAt: Timestamp;
 }

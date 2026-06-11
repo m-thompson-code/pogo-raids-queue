@@ -1,10 +1,11 @@
+import { getUser } from '@pogo-raid-system/firebase';
 import { sendChatMessage } from '../api/chat.js';
 import { messages } from '../messages.js';
 import { isQueueOpen } from '../queue-state.js';
 import { getHintCooldownMs } from '../persisted-settings.js';
 import type { ChatMessageEvent } from '../types.js';
 import { isBegging, isRequesting, isAskingQuestion, involvesCode, involvesQueue, involvesRaid } from './flags.js';
-import { successfulRaiders, isPrivilegedUser, isFirstTimeChatter } from './shared.js';
+import { successfulRaiders, isPrivilegedUser, isFirstTimeChatter, markFirstTimeChatter, usersThatHaveRaidedBefore } from './shared.js';
 
 let lastHintAt = 0;
 
@@ -44,6 +45,19 @@ export const runDetectables = async (event: ChatMessageEvent): Promise<void> => 
   if (event.reply && event.reply.parent_user_id !== event.broadcaster_user_id) return;
   if (isPrivilegedUser(event)) return;
   if (successfulRaiders.has(event.chatter_user_id)) return;
+
+  // Look up whether this user has raided before, caching the result so Firestore
+  // is queried at most once per user per session.
+  // false = no record or raidCount 0 → mark as first-time chatter.
+  // true  = has raided before → skip the hint.
+  if (!usersThatHaveRaidedBefore.has(event.chatter_user_id)) {
+    const user = await getUser(event.chatter_user_id);
+    const hasRaided = user !== null && (user.raidCount ?? 0) > 0;
+    usersThatHaveRaidedBefore.set(event.chatter_user_id, hasRaided);
+    if (!hasRaided) {
+      markFirstTimeChatter(event.chatter_user_id);
+    }
+  }
 
   const reply = detectHint(event);
   if (reply === null) return;

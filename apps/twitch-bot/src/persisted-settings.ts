@@ -18,6 +18,14 @@ interface PersistedSettings {
   hintCooldownSeconds: number;
   /** Sliding window (seconds) for spam detection. 0 = disabled. */
   spamWindowSeconds: number;
+  /** Cooldown (seconds) between "Thank you for raiding" messages. 0 = no cooldown. */
+  invitedCooldownSeconds: number;
+  /** How often (seconds) the periodic reminder message is sent. 0 = disabled. */
+  intervalMessageSeconds: number;
+  /** How often (seconds) the promo message is sent. 0 = disabled. */
+  intervalPromoSeconds: number;
+  /** Cooldown (seconds) for info commands (!discord, !tiktok, !help, !code). 0 = no cooldown. */
+  infoCooldownSeconds: number;
   /** Commands that have been explicitly disabled. */
   disabledCommands: string[];
 }
@@ -25,6 +33,10 @@ interface PersistedSettings {
 const DEFAULTS: PersistedSettings = {
   hintCooldownSeconds: 60,
   spamWindowSeconds: 60,
+  invitedCooldownSeconds: 15,
+  intervalMessageSeconds: 300,
+  intervalPromoSeconds: 840,
+  infoCooldownSeconds: 30,
   disabledCommands: [],
 };
 
@@ -46,7 +58,7 @@ export const loadSettings = (): void => {
   try {
     const raw = readFileSync(CONFIG_PATH, 'utf-8');
     settings = { ...DEFAULTS, ...JSON.parse(raw) };
-    console.log(`[config] Loaded settings from ${CONFIG_PATH}`);
+
   } catch {
     // Corrupt file — reset to defaults
     save();
@@ -66,6 +78,10 @@ export const setSpamWindowSeconds = (seconds: number): void => {
 
 export const getHintCooldownMs = (): number => settings.hintCooldownSeconds * 1000;
 export const getSpamWindowMs = (): number => settings.spamWindowSeconds * 1000;
+export const getInvitedCooldownMs = (): number => settings.invitedCooldownSeconds * 1000;
+export const getIntervalMessageMs = (): number => settings.intervalMessageSeconds * 1000;
+export const getIntervalPromoMs = (): number => settings.intervalPromoSeconds * 1000;
+export const getInfoCooldownMs = (): number => settings.infoCooldownSeconds * 1000;
 
 export const isCommandEnabled = (command: string): boolean =>
   !settings.disabledCommands.includes(command);

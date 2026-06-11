@@ -1,12 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, DatePipe } from '@angular/common';
 import { RaidQueueService, type QueueEntry } from './raid-queue.service';
 
 const GROUP_SIZE = 5;
 
 @Component({
   selector: 'app-raid-queue',
-  imports: [AsyncPipe],
+  imports: [AsyncPipe, DatePipe],
   templateUrl: './raid-queue.component.html',
   styleUrl: './raid-queue.component.scss',
 })
@@ -15,6 +15,8 @@ export class RaidQueueComponent {
   protected readonly queue$ = this.raidQueueService.getQueue();
 
   protected readonly snackbar = signal<string | null>(null);
+  protected readonly addInput = signal('');
+  protected readonly lastClearedAt = signal<Date | null>(null);
   private snackbarTimer: ReturnType<typeof setTimeout> | null = null;
 
   private showSnackbar(message: string): void {
@@ -44,13 +46,15 @@ export class RaidQueueComponent {
   protected copyEntry(entry: QueueEntry): void {
     if (entry.status === 'invited') return;
     navigator.clipboard.writeText(entry.pogoUsername);
+    this.raidQueueService.updateGroupStatus([entry.twitchUserId], 'copied');
     this.showSnackbar(`${entry.pogoUsername} copied to clipboard`);
   }
 
   protected copyGroup(group: QueueEntry[], groupIndex: number): void {
-    const names = group.filter((e) => e.status !== 'invited').map((e) => e.pogoUsername);
-    if (names.length === 0) return;
-    navigator.clipboard.writeText(names.join(','));
+    const eligible = group.filter((e) => e.status !== 'invited');
+    if (eligible.length === 0) return;
+    navigator.clipboard.writeText(eligible.map((e) => e.pogoUsername).join(','));
+    this.raidQueueService.updateGroupStatus(eligible.map((e) => e.twitchUserId), 'copied');
     this.showSnackbar(`Group ${groupIndex + 1} copied to clipboard`);
   }
 
@@ -68,14 +72,26 @@ export class RaidQueueComponent {
   }
 
   protected copyAll(queue: QueueEntry[]): void {
-    const names = queue.filter((e) => e.status !== 'invited').map((e) => e.pogoUsername);
-    if (names.length === 0) return;
-    navigator.clipboard.writeText(names.join(','));
+    const eligible = queue.filter((e) => e.status !== 'invited');
+    if (eligible.length === 0) return;
+    navigator.clipboard.writeText(eligible.map((e) => e.pogoUsername).join(','));
+    this.raidQueueService.updateGroupStatus(eligible.map((e) => e.twitchUserId), 'copied');
     this.showSnackbar('All users copied to clipboard');
   }
 
   protected clearAll(queue: QueueEntry[]): void {
     queue.forEach((e) => this.raidQueueService.removeEntry(e.twitchUserId));
+    this.lastClearedAt.set(new Date());
     this.showSnackbar('Queue cleared');
+  }
+
+  protected async addUser(): Promise<void> {
+    const raw = this.addInput().trim();
+    if (!raw) return;
+    const usernames = raw.split(',').map((u) => u.trim()).filter(Boolean);
+    await Promise.all(usernames.map((u) => this.raidQueueService.addManual(u)));
+    this.addInput.set('');
+    const listed = usernames.join(', ');
+    this.showSnackbar(`${listed} added to queue`);
   }
 }

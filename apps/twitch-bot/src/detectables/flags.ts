@@ -55,9 +55,11 @@ export const isAskingQuestion = (lower: string): boolean =>
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Matches the word "code" or a literal Pokémon GO friend code (12 digits or 3×4 digits). */
+/** Matches the word "code", "fc", "friend request", or a literal Pokémon GO friend code (12 digits or 3×4 digits). */
 export const CODE_PATTERNS = [
   /\bcode\b/,
+  /\bfc\b/,
+  /\bfriend\s+request\b/,
   /\b\d{12}\b/,
   /\b\d{4}\s\d{4}\s\d{4}\b/,
 ];

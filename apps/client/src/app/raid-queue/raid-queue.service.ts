@@ -8,6 +8,7 @@ import {
   onSnapshot,
   doc,
   deleteDoc,
+  setDoc,
   writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
@@ -20,7 +21,7 @@ export interface QueueEntry {
   pogoUsername: string;
   isSubscriber: boolean;
   isVip: boolean;
-  status: 'joined' | 'invited';
+  status: 'joined' | 'invited' | 'copied';
   joinedAt: Date;
 }
 
@@ -48,7 +49,7 @@ export class RaidQueueService implements OnDestroy {
           pogoUsername: data['pogoUsername'] as string,
           isSubscriber: data['isSubscriber'] as boolean,
           isVip: data['isVip'] as boolean,
-          status: (data['status'] as 'joined' | 'invited') ?? 'joined',
+          status: (data['status'] as 'joined' | 'invited' | 'copied') ?? 'joined',
           joinedAt: data['joinedAt']?.toDate?.() ?? new Date(),
         };
       });
@@ -70,7 +71,7 @@ export class RaidQueueService implements OnDestroy {
   /** Updates the status of a group of queue entries in a single batch write */
   async updateGroupStatus(
     twitchUserIds: string[],
-    status: 'joined' | 'invited',
+    status: 'joined' | 'invited' | 'copied',
   ): Promise<void> {
     const db = getFirestore();
     const batch = writeBatch(db);
@@ -78,6 +79,21 @@ export class RaidQueueService implements OnDestroy {
       batch.update(doc(db, 'raidQueue', twitchUserId), { status });
     }
     await batch.commit();
+  }
+
+  /** Adds a manual entry (no Twitch account) by Pokémon GO username */
+  async addManual(pogoUsername: string): Promise<void> {
+    const db = getFirestore();
+    const id = `manual_${pogoUsername.toLowerCase()}`;
+    await setDoc(doc(db, 'raidQueue', id), {
+      twitchUserId: id,
+      twitchUsername: '',
+      pogoUsername,
+      isSubscriber: false,
+      isVip: false,
+      status: 'joined',
+      joinedAt: new Date(),
+    });
   }
 
   ngOnDestroy(): void {

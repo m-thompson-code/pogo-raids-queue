@@ -1,14 +1,25 @@
 <section class="queue">
   @let queue = queue$ | async;
   @if (queue !== null) {
+    <div class="queue__toolbar">
+      <button class="toolbar-btn" (click)="copyAll(queue)">Copy all</button>
+      <button class="toolbar-btn toolbar-btn--danger" (click)="clearAll(queue)">Clear all</button>
+      <form class="toolbar-add" (submit)="$event.preventDefault(); addUser()">
+        <input
+          class="toolbar-add__input"
+          type="text"
+          placeholder="Add user…"
+          [value]="addInput()"
+          (input)="addInput.set($any($event.target).value)" />
+        <button class="toolbar-btn toolbar-add__btn" type="submit">Add</button>
+      </form>
+    </div>
+    @if (lastClearedAt()) {
+      <p class="queue__last-cleared">Last cleared at {{ lastClearedAt() | date:'HH:mm:ss' }}</p>
+    }
     @if (queue.length === 0) {
       <p class="queue__empty">Queue is empty</p>
     } @else {
-      <div class="queue__toolbar">
-        <button class="toolbar-btn" (click)="copyAll(queue)">Copy all</button>
-        <button class="toolbar-btn toolbar-btn--danger" (click)="clearAll(queue)">Clear all</button>
-      </div>
-
       @for (group of toGroups(queue); track $index) {
         <div class="group">
           <div class="group__header">
@@ -21,7 +32,13 @@
           </div>
           <ul class="group__pills">
             @for (entry of group; track entry.twitchUserId) {
-              <li class="pill" [class.pill--invited]="entry.status === 'invited'" [attr.data-twitch]="entry.twitchUsername || 'Manual entry'" (click)="copyEntry(entry)" (mousedown)="toggleEntryStatus(entry, $event)" (contextmenu)="$event.preventDefault()">
+              <li class="pill"
+                [class.pill--invited]="entry.status === 'invited'"
+                [class.pill--copied]="entry.status === 'copied'"
+                [attr.data-twitch]="entry.twitchUsername || 'Manual entry'"
+                (click)="copyEntry(entry)"
+                (mousedown)="toggleEntryStatus(entry, $event)"
+                (contextmenu)="$event.preventDefault()">
                 @if (entry.isSubscriber) {
                   <img class="pill__sub-badge" src="/sub-badge.png" alt="" aria-hidden="true">
                 }

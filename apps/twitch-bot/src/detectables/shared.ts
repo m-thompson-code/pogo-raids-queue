@@ -7,6 +7,7 @@ export const successfulRaiders = new Set<string>();
 export const markRaidSuccess = (twitchUserId: string): void => {
   successfulRaiders.add(twitchUserId);
   firstTimeChatters.delete(twitchUserId);
+  usersThatHaveRaidedBefore.set(twitchUserId, true);
 };
 
 /** Removes the successful-raider flag, e.g. after a strike. */
@@ -18,10 +19,21 @@ export const isPrivilegedUser = (event: ChatMessageEvent): boolean =>
   event.badges.some((b) => b.set_id === 'broadcaster' || b.set_id === 'moderator');
 
 export const firstTimeChatters = new Set<string>();
-export const markFirstTimeChatter = (twitchUserId: string): void => { firstTimeChatters.add(twitchUserId); };
+export const markFirstTimeChatter = (twitchUserId: string): void => {
+  firstTimeChatters.add(twitchUserId);
+  usersThatHaveRaidedBefore.set(twitchUserId, false);
+};
 export const unmarkFirstTimeChatter = (twitchUserId: string): void => { firstTimeChatters.delete(twitchUserId); };
 export const isFirstTimeChatter = (event: ChatMessageEvent): boolean =>
   firstTimeChatters.has(event.chatter_user_id);
+
+/**
+ * Per-session cache of whether a user has previously raided (raidCount >= 1).
+ * true  = has raided before → not a first-time chatter
+ * false = no record or raidCount is 0 → first-time chatter
+ * Populated on first message from each user so Firestore is queried at most once per session.
+ */
+export const usersThatHaveRaidedBefore = new Map<string, boolean>();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // In-memory queue membership tracking
@@ -31,9 +43,9 @@ const queuedTwitchUserIds = new Set<string>();
 /** Reverse map for pogo-username-based removal (e.g. !remove). */
 const queuePogoToTwitchId = new Map<string, string>();
 /** Tracks the current status of each queued user. */
-const queueEntryStatuses = new Map<string, 'joined' | 'invited'>();
+const queueEntryStatuses = new Map<string, 'joined' | 'invited' | 'copied'>();
 
-export const markInQueue = (twitchUserId: string, pogoUsername: string, status: 'joined' | 'invited' = 'joined'): void => {
+export const markInQueue = (twitchUserId: string, pogoUsername: string, status: 'joined' | 'invited' | 'copied' = 'joined'): void => {
   queuedTwitchUserIds.add(twitchUserId);
   queuePogoToTwitchId.set(pogoUsername.toLowerCase(), twitchUserId);
   queueEntryStatuses.set(twitchUserId, status);
@@ -63,7 +75,7 @@ export const clearQueueMemory = (): void => {
 };
 
 /** Populates in-memory queue state from Firestore on startup. */
-export const hydrateQueueMemory = (entries: Array<{ twitchUserId: string; pogoUsername: string; status?: 'joined' | 'invited' }>): void => {
+export const hydrateQueueMemory = (entries: Array<{ twitchUserId: string; pogoUsername: string; status?: 'joined' | 'invited' | 'copied' }>): void => {
   clearQueueMemory();
   for (const entry of entries) {
     markInQueue(entry.twitchUserId, entry.pogoUsername, entry.status ?? 'joined');
@@ -73,10 +85,10 @@ export const hydrateQueueMemory = (entries: Array<{ twitchUserId: string; pogoUs
 export const isInQueue = (twitchUserId: string): boolean =>
   queuedTwitchUserIds.has(twitchUserId);
 
-export const getQueueEntryStatus = (twitchUserId: string): 'joined' | 'invited' | undefined =>
+export const getQueueEntryStatus = (twitchUserId: string): 'joined' | 'invited' | 'copied' | undefined =>
   queueEntryStatuses.get(twitchUserId);
 
-export const setQueueEntryStatus = (twitchUserId: string, status: 'joined' | 'invited'): void => {
+export const setQueueEntryStatus = (twitchUserId: string, status: 'joined' | 'invited' | 'copied'): void => {
   queueEntryStatuses.set(twitchUserId, status);
 };
 

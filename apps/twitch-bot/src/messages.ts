@@ -43,6 +43,12 @@ export const messages = {
   addSuccess: (listed: string, noun: string) =>
     `${listed} ${noun} been added to the raid queue.`,
 
+  // !invited
+  invitedNotInQueue: (username: string) =>
+    `@${username} you're not in queue yet.`,
+  invitedAlreadyMarked: `You're already marked as invited.`,
+  invitedSuccess: `Thank you for raiding with us!`,
+
   // !list
   listEmpty: () =>
     `The queue is empty.`,
@@ -76,6 +82,12 @@ export const messages = {
     `!raid your_pogo_username. Use !help for more information`,
   help:
     `Add the host ${FRIEND_CODE_RAW} and tell host your username. Use !raid your_pogo_username to join the queue`,
+
+  // periodic interval reminder
+  intervalReminder:
+    `Please use !ty to show us you made it to the raid and to show your appreciation! Use !commands for a list of all commands`,
+  intervalPromo:
+    `Post your wins in discord https://discord.gg/AARRcwjChD and drop a follow on TikTok https://www.tiktok.com/@poketrainerhydro`,
 
   // spam detection
   spamWarning: (username: string) =>

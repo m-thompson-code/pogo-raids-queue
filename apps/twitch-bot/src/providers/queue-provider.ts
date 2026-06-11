@@ -14,7 +14,7 @@ export interface QueueEntry {
   pogoUsername: string;
   isSubscriber: boolean;
   isVip: boolean;
-  status: 'joined' | 'invited';
+  status: 'joined' | 'invited' | 'copied';
   joinedAt: Date;
 }
 
@@ -59,5 +59,5 @@ export interface QueueProvider {
   removeByPogoUsername(pogoUsername: string): Promise<boolean>;
 
   /** Updates the status field of a single queue entry. */
-  setEntryStatus(twitchUserId: string, status: 'joined' | 'invited'): Promise<void>;
+  setEntryStatus(twitchUserId: string, status: 'joined' | 'invited' | 'copied'): Promise<void>;
 }

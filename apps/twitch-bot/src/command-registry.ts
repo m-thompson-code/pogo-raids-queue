@@ -34,6 +34,12 @@ export const COMMAND_REGISTRY: CommandMeta[] = [
     description: 'Removes you from the queue',
   },
   {
+    command: 'invited',
+    usage: '!invited',
+    permission: 'everyone',
+    description: 'Marks yourself as invited (also: !thank, !ty)',
+  },
+  {
     command: 'list',
     usage: '!list',
     permission: 'everyone',
@@ -104,5 +110,35 @@ export const COMMAND_REGISTRY: CommandMeta[] = [
     usage: '!disable <command>',
     permission: 'mods',
     description: 'Disables a command (enable/disable cannot be disabled)',
+  },
+  {
+    command: 'discord',
+    usage: '!discord',
+    permission: 'everyone',
+    description: 'Posts the Discord invite link',
+  },
+  {
+    command: 'tiktok',
+    usage: '!tiktok',
+    permission: 'everyone',
+    description: 'Posts the TikTok profile link',
+  },
+  {
+    command: 'help',
+    usage: '!help',
+    permission: 'everyone',
+    description: 'Shows how to join the raid queue',
+  },
+  {
+    command: 'code',
+    usage: '!code',
+    permission: 'everyone',
+    description: 'Shows the friend code to add',
+  },
+  {
+    command: 'commands',
+    usage: '!commands',
+    permission: 'everyone',
+    description: 'Lists all available commands',
   },
 ];

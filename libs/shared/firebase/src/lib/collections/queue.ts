@@ -63,7 +63,7 @@ export const getQueue = async (): Promise<
     pogoUsername: string;
     isSubscriber: boolean;
     isVip: boolean;
-    status: 'joined' | 'invited';
+    status: 'joined' | 'invited' | 'copied';
     joinedAt: Date;
   }>
 > => {
@@ -79,7 +79,7 @@ export const getQueue = async (): Promise<
       pogoUsername: data['pogoUsername'] as string,
       isSubscriber: data['isSubscriber'] as boolean,
       isVip: data['isVip'] as boolean,
-      status: (data['status'] as 'joined' | 'invited') ?? 'joined',
+      status: (data['status'] as 'joined' | 'invited' | 'copied') ?? 'joined',
       joinedAt: (data['joinedAt']?.toDate?.() ?? new Date()) as Date,
     };
   });
@@ -157,14 +157,14 @@ export const removeFromQueueByPogoUsername = async (
  * Returns the unsubscribe function.
  */
 export const subscribeToQueue = (
-  callback: (entries: Array<{ twitchUserId: string; pogoUsername: string; status: 'joined' | 'invited' }>) => void,
+  callback: (entries: Array<{ twitchUserId: string; pogoUsername: string; status: 'joined' | 'invited' | 'copied' }>) => void,
   onError?: (error: Error) => void,
 ): (() => void) => {
   return getDb().collection('raidQueue').onSnapshot((snapshot) => {
     const entries = snapshot.docs.map((d) => ({
       twitchUserId: d.data()['twitchUserId'] as string,
       pogoUsername: d.data()['pogoUsername'] as string,
-      status: (d.data()['status'] as 'joined' | 'invited') ?? 'joined',
+      status: (d.data()['status'] as 'joined' | 'invited' | 'copied') ?? 'joined',
     }));
     callback(entries);
   }, onError);
@@ -175,7 +175,7 @@ export const subscribeToQueue = (
  */
 export const updateQueueEntryStatus = async (
   twitchUserId: string,
-  status: 'joined' | 'invited',
+  status: 'joined' | 'invited' | 'copied',
 ): Promise<void> => {
   await getDb().collection('raidQueue').doc(twitchUserId).update({ status });
 };

@@ -83,7 +83,7 @@ export class InMemoryQueueProvider implements QueueProvider {
     return false;
   }
 
-  async setEntryStatus(twitchUserId: string, status: 'joined' | 'invited'): Promise<void> {
+  async setEntryStatus(twitchUserId: string, status: 'joined' | 'invited' | 'copied'): Promise<void> {
     const entry = this.queue.get(twitchUserId);
     if (entry) this.queue.set(twitchUserId, { ...entry, status });
   }
