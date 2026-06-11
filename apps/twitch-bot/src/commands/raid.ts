@@ -1,9 +1,9 @@
 import { sendChatMessage } from '../api/chat.js';
 import { messages } from '../messages.js';
 import { isQueueOpen } from '../queue-state.js';
-import { markRaidSuccess, isFirstTimeChatter } from '../detectables/shared.js';
+import { markRaidSuccess, isFirstTimeChatter, markInQueue, isInQueue, isFirestoreListenerActive, getQueueEntryStatus, setQueueEntryStatus } from '../detectables/shared.js';
 import { getUser } from '@pogo-raid-system/firebase';
-import type { QueueProvider } from '../providers/queue-provider.js';
+import { queue } from '../providers/queue.js';
 import type { ChatMessageEvent } from '../types.js';
 
 /** In-memory cache of twitchUserId → pogoUsername to avoid repeat DB reads. */
@@ -27,12 +27,13 @@ const pogoUsernameCache = new Map<string, string>();
  * @param provider - The queue provider to write to
  */
 export const handleRaidCommand = async (
-  event: ChatMessageEvent,
-  provider: QueueProvider
+  event: ChatMessageEvent
 ): Promise<void> => {
   const parts = event.message.text.trim().split(/\s+/);
   // parts[0] = '!raid' (any casing), parts[1] = pogo username (optional, preserve original case)
-  const pogoUsername = parts[1];
+  // Treat args that contain zero alphanumeric characters (e.g. invisible Unicode) as absent.
+  const rawArg = parts[1];
+  const pogoUsername = rawArg && /[a-zA-Z0-9]/.test(rawArg) ? rawArg : undefined;
 
   if (!isQueueOpen()) {
     await sendChatMessage(messages.raidQueueClosed(event.chatter_user_login));
@@ -42,6 +43,21 @@ export const handleRaidCommand = async (
   const cachedUsername = pogoUsernameCache.get(event.chatter_user_id);
 
   if (!pogoUsername) {
+    if (isInQueue(event.chatter_user_id)) {
+      if (getQueueEntryStatus(event.chatter_user_id) === 'invited') {
+        try {
+          await queue.setEntryStatus(event.chatter_user_id, 'joined');
+          if (!isFirestoreListenerActive()) setQueueEntryStatus(event.chatter_user_id, 'joined');
+        } catch {
+          setQueueEntryStatus(event.chatter_user_id, 'joined');
+        }
+        const pogo = pogoUsernameCache.get(event.chatter_user_id) ?? event.chatter_user_login;
+        await sendChatMessage(messages.raidRejoinedQueue(pogo));
+      } else {
+        await sendChatMessage(messages.raidAlreadyInQueue);
+      }
+      return;
+    }
     const resolvedUsername = cachedUsername ?? (await getUser(event.chatter_user_id))?.pogoUsername;
     if (resolvedUsername) {
       const raidParams = {
@@ -53,12 +69,32 @@ export const handleRaidCommand = async (
         ),
         isVip: event.badges.some((b) => b.set_id === 'vip'),
       };
-      await Promise.all([provider.upsertUser(raidParams), provider.addToQueue(raidParams)]);
+      try {
+        await Promise.all([queue.upsertUser(raidParams), queue.addToQueue(raidParams)]);
+        if (!isFirestoreListenerActive()) markInQueue(event.chatter_user_id, resolvedUsername);
+      } catch {
+        markInQueue(event.chatter_user_id, resolvedUsername);
+      }
       pogoUsernameCache.set(event.chatter_user_id, resolvedUsername);
       markRaidSuccess(event.chatter_user_id);
       await sendChatMessage(messages.raidAdded(resolvedUsername));
     } else {
       await sendChatMessage(messages.raidMissingUsername(event.chatter_user_login));
+    }
+    return;
+  }
+
+  if (isInQueue(event.chatter_user_id)) {
+    if (getQueueEntryStatus(event.chatter_user_id) === 'invited') {
+      try {
+        await queue.setEntryStatus(event.chatter_user_id, 'joined');
+        if (!isFirestoreListenerActive()) setQueueEntryStatus(event.chatter_user_id, 'joined');
+      } catch {
+        setQueueEntryStatus(event.chatter_user_id, 'joined');
+      }
+      await sendChatMessage(messages.raidRejoinedQueue(pogoUsername));
+    } else {
+      await sendChatMessage(messages.raidAlreadyInQueue);
     }
     return;
   }
@@ -78,10 +114,14 @@ export const handleRaidCommand = async (
     isVip: event.badges.some((b) => b.set_id === 'vip'),
   };
 
-  await Promise.all([provider.upsertUser(raidParams), provider.addToQueue(raidParams)]);
-
   const isNewlyCached = !cachedUsername;
   const firstTime = isFirstTimeChatter(event);
+  try {
+    await Promise.all([queue.upsertUser(raidParams), queue.addToQueue(raidParams)]);
+    if (!isFirestoreListenerActive()) markInQueue(event.chatter_user_id, pogoUsername);
+  } catch {
+    markInQueue(event.chatter_user_id, pogoUsername);
+  }
   pogoUsernameCache.set(event.chatter_user_id, pogoUsername);
   markRaidSuccess(event.chatter_user_id);
   const msg = firstTime

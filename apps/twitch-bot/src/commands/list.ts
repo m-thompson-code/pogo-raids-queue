@@ -1,6 +1,6 @@
 import { sendChatMessage } from '../api/chat.js';
 import { messages } from '../messages.js';
-import type { QueueProvider } from '../providers/queue-provider.js';
+import { queue } from '../providers/queue.js';
 import type { ChatMessageEvent } from '../types.js';
 
 /**
@@ -13,16 +13,15 @@ import type { ChatMessageEvent } from '../types.js';
  * @param provider - The queue provider to read from
  */
 export const handleListCommand = async (
-  event: ChatMessageEvent,
-  provider: QueueProvider
+  event: ChatMessageEvent
 ): Promise<void> => {
-  const queue = await provider.getQueue();
+  const entries = await queue.getQueue();
 
-  if (queue.length === 0) {
+  if (entries.length === 0) {
     await sendChatMessage(messages.listEmpty());
     return;
   }
 
-  const names = queue.map((entry) => entry.pogoUsername).join(',');
+  const names = entries.map((entry) => entry.pogoUsername).join(',');
   await sendChatMessage(names);
 };

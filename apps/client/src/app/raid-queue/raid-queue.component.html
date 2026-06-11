@@ -15,12 +15,13 @@
             <h3 class="group__label">Group {{ $index + 1 }}</h3>
             <div class="group__actions">
               <button class="toolbar-btn toolbar-btn--sm" (click)="copyGroup(group, $index)">Copy</button>
+              <button class="toolbar-btn toolbar-btn--sm toolbar-btn--accent" (click)="setGroupInvited(group, $index)">Invited</button>
               <button class="toolbar-btn toolbar-btn--sm toolbar-btn--danger" (click)="removeGroup(group, $index)">Clear</button>
             </div>
           </div>
           <ul class="group__pills">
             @for (entry of group; track entry.twitchUserId) {
-              <li class="pill" [attr.data-twitch]="entry.twitchUsername || 'Manual entry'" (click)="copyEntry(entry)">
+              <li class="pill" [class.pill--invited]="entry.status === 'invited'" [attr.data-twitch]="entry.twitchUsername || 'Manual entry'" (click)="copyEntry(entry)" (mousedown)="toggleEntryStatus(entry, $event)" (contextmenu)="$event.preventDefault()">
                 @if (entry.isSubscriber) {
                   <img class="pill__sub-badge" src="/sub-badge.png" alt="" aria-hidden="true">
                 }

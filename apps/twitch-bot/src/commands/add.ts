@@ -1,6 +1,6 @@
 import { sendChatMessage } from '../api/chat.js';
 import { messages } from '../messages.js';
-import type { QueueProvider } from '../providers/queue-provider.js';
+import { queue } from '../providers/queue.js';
 import type { ChatMessageEvent } from '../types.js';
 
 /**
@@ -17,8 +17,7 @@ import type { ChatMessageEvent } from '../types.js';
  * @param provider - The queue provider to write to
  */
 export const handleAddCommand = async (
-  event: ChatMessageEvent,
-  provider: QueueProvider
+  event: ChatMessageEvent
 ): Promise<void> => {
   const parts = event.message.text.trim().split(/\s+/);
   // parts[0] = '!add', rest joined and split by comma to support multiple usernames
@@ -31,7 +30,7 @@ export const handleAddCommand = async (
 
   const usernames = rawArg.split(',').map((u) => u.trim()).filter(Boolean);
 
-  await Promise.all(usernames.map((u) => provider.addManual(u)));
+  await Promise.all(usernames.map((u) => queue.addManual(u)));
 
   const listed = usernames.join(', ');
   const noun = usernames.length === 1 ? 'has' : 'have';

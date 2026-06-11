@@ -1,6 +1,6 @@
 import { sendChatMessage } from '../api/chat.js';
 import { messages } from '../messages.js';
-import type { QueueProvider } from '../providers/queue-provider.js';
+import { queue } from '../providers/queue.js';
 import type { ChatMessageEvent } from '../types.js';
 
 const GROUP_SIZE = 5;
@@ -12,17 +12,16 @@ const GROUP_SIZE = 5;
  * Example: "GroupA1,GroupA2,GroupA3,GroupA4,GroupA5 — GroupB1,GroupB2..."
  */
 export const handleGroupsCommand = async (
-  _event: ChatMessageEvent,
-  provider: QueueProvider
+  _event: ChatMessageEvent
 ): Promise<void> => {
-  const queue = await provider.getQueue();
+  const entries = await queue.getQueue();
 
-  if (queue.length === 0) {
+  if (entries.length === 0) {
     await sendChatMessage(messages.listEmpty());
     return;
   }
 
-  const names = queue.map((entry) => entry.pogoUsername);
+  const names = entries.map((entry) => entry.pogoUsername);
   const groups: string[] = [];
 
   for (let i = 0; i < names.length; i += GROUP_SIZE) {

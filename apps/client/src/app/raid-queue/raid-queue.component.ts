@@ -42,17 +42,35 @@ export class RaidQueueComponent {
   }
 
   protected copyEntry(entry: QueueEntry): void {
+    if (entry.status === 'invited') return;
     navigator.clipboard.writeText(entry.pogoUsername);
     this.showSnackbar(`${entry.pogoUsername} copied to clipboard`);
   }
 
   protected copyGroup(group: QueueEntry[], groupIndex: number): void {
-    navigator.clipboard.writeText(group.map((e) => e.pogoUsername).join(','));
+    const names = group.filter((e) => e.status !== 'invited').map((e) => e.pogoUsername);
+    if (names.length === 0) return;
+    navigator.clipboard.writeText(names.join(','));
     this.showSnackbar(`Group ${groupIndex + 1} copied to clipboard`);
   }
 
+  protected setGroupInvited(group: QueueEntry[], groupIndex: number): void {
+    this.raidQueueService.updateGroupStatus(group.map((e) => e.twitchUserId), 'invited');
+    this.showSnackbar(`Group ${groupIndex + 1} marked as invited`);
+  }
+
+  protected toggleEntryStatus(entry: QueueEntry, event: MouseEvent): void {
+    event.preventDefault();
+    if (event.button !== 2) return;
+    const newStatus = entry.status === 'invited' ? 'joined' : 'invited';
+    this.raidQueueService.updateGroupStatus([entry.twitchUserId], newStatus);
+    this.showSnackbar(`${entry.pogoUsername} marked as ${newStatus}`);
+  }
+
   protected copyAll(queue: QueueEntry[]): void {
-    navigator.clipboard.writeText(queue.map((e) => e.pogoUsername).join(','));
+    const names = queue.filter((e) => e.status !== 'invited').map((e) => e.pogoUsername);
+    if (names.length === 0) return;
+    navigator.clipboard.writeText(names.join(','));
     this.showSnackbar('All users copied to clipboard');
   }
 

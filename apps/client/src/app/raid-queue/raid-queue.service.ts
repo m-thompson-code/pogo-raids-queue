@@ -8,6 +8,7 @@ import {
   onSnapshot,
   doc,
   deleteDoc,
+  writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -19,6 +20,7 @@ export interface QueueEntry {
   pogoUsername: string;
   isSubscriber: boolean;
   isVip: boolean;
+  status: 'joined' | 'invited';
   joinedAt: Date;
 }
 
@@ -46,6 +48,7 @@ export class RaidQueueService implements OnDestroy {
           pogoUsername: data['pogoUsername'] as string,
           isSubscriber: data['isSubscriber'] as boolean,
           isVip: data['isVip'] as boolean,
+          status: (data['status'] as 'joined' | 'invited') ?? 'joined',
           joinedAt: data['joinedAt']?.toDate?.() ?? new Date(),
         };
       });
@@ -62,6 +65,19 @@ export class RaidQueueService implements OnDestroy {
   async removeEntry(twitchUserId: string): Promise<void> {
     const db = getFirestore();
     await deleteDoc(doc(db, 'raidQueue', twitchUserId));
+  }
+
+  /** Updates the status of a group of queue entries in a single batch write */
+  async updateGroupStatus(
+    twitchUserIds: string[],
+    status: 'joined' | 'invited',
+  ): Promise<void> {
+    const db = getFirestore();
+    const batch = writeBatch(db);
+    for (const twitchUserId of twitchUserIds) {
+      batch.update(doc(db, 'raidQueue', twitchUserId), { status });
+    }
+    await batch.commit();
   }
 
   ngOnDestroy(): void {

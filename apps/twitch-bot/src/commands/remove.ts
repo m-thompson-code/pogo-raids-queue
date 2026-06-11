@@ -1,11 +1,11 @@
 import { sendChatMessage } from '../api/chat.js';
 import { messages } from '../messages.js';
-import type { QueueProvider } from '../providers/queue-provider.js';
+import { unmarkInQueueByPogoUsername, isFirestoreListenerActive } from '../detectables/shared.js';
+import { queue } from '../providers/queue.js';
 import type { ChatMessageEvent } from '../types.js';
 
 export const handleRemoveCommand = async (
-  event: ChatMessageEvent,
-  provider: QueueProvider
+  event: ChatMessageEvent
 ): Promise<void> => {
   const parts = event.message.text.trim().split(/\s+/);
   const pogoUsername = parts[1];
@@ -15,7 +15,14 @@ export const handleRemoveCommand = async (
     return;
   }
 
-  const removed = await provider.removeByPogoUsername(pogoUsername);
+  let removed: boolean;
+  try {
+    removed = await queue.removeByPogoUsername(pogoUsername);
+    if (removed && !isFirestoreListenerActive()) unmarkInQueueByPogoUsername(pogoUsername);
+  } catch {
+    removed = false;
+    unmarkInQueueByPogoUsername(pogoUsername);
+  }
 
   if (removed) {
     await sendChatMessage(messages.removeSuccess(pogoUsername));

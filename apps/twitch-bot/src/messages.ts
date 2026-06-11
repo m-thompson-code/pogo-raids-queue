@@ -17,6 +17,9 @@ export const messages = {
     `@${username} Your pogo username includes an invalid character.`,
   raidAdded: (pogoUsername: string) =>
     `${pogoUsername} added to the raid queue!`,
+  raidAlreadyInQueue: `You're already in the queue.`,
+  raidRejoinedQueue: (pogoUsername: string) =>
+    `${pogoUsername} is back in the queue!`,
   raidAddedUsernameSaved: (pogoUsername: string) =>
     `${pogoUsername} added to the raid queue! Username saved — next time you can just use !raid`,
   raidAddedFirstTime: (pogoUsername: string) =>

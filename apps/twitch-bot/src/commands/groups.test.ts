@@ -5,9 +5,10 @@ vi.mock('../api/chat.js', () => ({ sendChatMessage: vi.fn() }));
 vi.mock('../messages.js', () => ({
   messages: { listEmpty: () => 'listEmpty' },
 }));
+vi.mock('../providers/queue.js', () => ({ queue: { getQueue: vi.fn() } }));
 
 import { sendChatMessage } from '../api/chat.js';
-import type { QueueProvider } from '../providers/queue-provider.js';
+import { queue } from '../providers/queue.js';
 
 const makeEntry = (pogoUsername: string) => ({
   pogoUsername,
@@ -16,16 +17,6 @@ const makeEntry = (pogoUsername: string) => ({
   isSubscriber: false,
   isVip: false,
   joinedAt: new Date(),
-});
-
-const mockProvider = (entries: ReturnType<typeof makeEntry>[]): QueueProvider => ({
-  getQueue: vi.fn().mockResolvedValue(entries),
-  upsertUser: vi.fn(),
-  addToQueue: vi.fn(),
-  clearQueue: vi.fn(),
-  addManual: vi.fn(),
-  removeByTwitchId: vi.fn(),
-  removeByPogoUsername: vi.fn(),
 });
 
 const makeEvent = () => ({
@@ -39,19 +30,20 @@ beforeEach(() => vi.clearAllMocks());
 
 describe('handleGroupsCommand', () => {
   it('sends empty message when queue is empty', async () => {
-    await handleGroupsCommand(makeEvent() as any, mockProvider([]));
+    vi.mocked(queue.getQueue).mockResolvedValue([]);
+    await handleGroupsCommand(makeEvent() as any);
     expect(sendChatMessage).toHaveBeenCalledWith('listEmpty');
   });
 
   it('sends a single group when queue has 5 or fewer entries', async () => {
-    const entries = ['A', 'B', 'C'].map(makeEntry);
-    await handleGroupsCommand(makeEvent() as any, mockProvider(entries));
+    vi.mocked(queue.getQueue).mockResolvedValue(['A', 'B', 'C'].map(makeEntry));
+    await handleGroupsCommand(makeEvent() as any);
     expect(sendChatMessage).toHaveBeenCalledWith('A, B, C');
   });
 
   it('splits into groups of 5 separated by em dash', async () => {
-    const entries = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(makeEntry);
-    await handleGroupsCommand(makeEvent() as any, mockProvider(entries));
+    vi.mocked(queue.getQueue).mockResolvedValue(['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(makeEntry));
+    await handleGroupsCommand(makeEvent() as any);
     expect(sendChatMessage).toHaveBeenCalledWith('A, B, C, D, E — F, G');
   });
 });

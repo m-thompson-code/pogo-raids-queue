@@ -6,6 +6,7 @@ import {
   addManualToQueue as firestoreAddManualToQueue,
   removeFromQueueByTwitchId as firestoreRemoveByTwitchId,
   removeFromQueueByPogoUsername as firestoreRemoveByPogoUsername,
+  updateQueueEntryStatus as firestoreUpdateQueueEntryStatus,
 } from '@pogo-raid-system/firebase';
 import type { QueueProvider, QueueEntry, RaidParams } from './queue-provider.js';
 
@@ -40,5 +41,9 @@ export class FirestoreQueueProvider implements QueueProvider {
 
   async removeByPogoUsername(pogoUsername: string): Promise<boolean> {
     return firestoreRemoveByPogoUsername(pogoUsername);
+  }
+
+  async setEntryStatus(twitchUserId: string, status: 'joined' | 'invited'): Promise<void> {
+    await firestoreUpdateQueueEntryStatus(twitchUserId, status);
   }
 }

@@ -7,5 +7,7 @@ export {
   addManualToQueue,
   removeFromQueueByTwitchId,
   removeFromQueueByPogoUsername,
+  subscribeToQueue,
+  updateQueueEntryStatus,
 } from './lib/collections/queue.js';
 export type { RaidParams, RaidUser, QueueEntry } from './lib/core/types.js';

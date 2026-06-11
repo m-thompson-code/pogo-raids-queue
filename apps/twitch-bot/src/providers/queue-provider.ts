@@ -14,6 +14,7 @@ export interface QueueEntry {
   pogoUsername: string;
   isSubscriber: boolean;
   isVip: boolean;
+  status: 'joined' | 'invited';
   joinedAt: Date;
 }
 
@@ -56,4 +57,7 @@ export interface QueueProvider {
    * Returns true if an entry was removed, false if not found.
    */
   removeByPogoUsername(pogoUsername: string): Promise<boolean>;
+
+  /** Updates the status field of a single queue entry. */
+  setEntryStatus(twitchUserId: string, status: 'joined' | 'invited'): Promise<void>;
 }

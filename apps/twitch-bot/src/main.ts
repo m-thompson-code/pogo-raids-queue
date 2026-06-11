@@ -19,13 +19,13 @@ import { handleSpamWindowCommand } from './commands/spam-window.js';
 import { handleEnableCommand, handleDisableCommand } from './commands/enable-disable.js';
 import { handleCommandsCommand } from './commands/commands.js';
 import { checkSpam } from './detectables/spam-detection.js';
-import { FirestoreQueueProvider } from './providers/firestore-queue-provider.js';
+import { subscribeToQueue } from '@pogo-raid-system/firebase';
 import { isPrivileged } from './permissions.js';
 import { sendChatMessage, registerEventSubListeners, registerBroadcasterEventSubListeners } from './api/chat.js';
 import { messages } from './messages.js';
 import { resolveCommand } from './command-aliases.js';
 import { config } from './config.js';
-import { markFirstTimeChatter } from './detectables/shared.js';
+import { markFirstTimeChatter, hydrateQueueMemory, setFirestoreListenerActive } from './detectables/shared.js';
 // To use the in-memory provider instead, swap the import above for:
 // import { InMemoryQueueProvider } from './providers/in-memory-queue-provider.js';
 
@@ -46,8 +46,18 @@ import { markFirstTimeChatter } from './detectables/shared.js';
   loadSettings();
   await validateToken();
 
-  const provider = new FirestoreQueueProvider();
-  // const provider = new InMemoryQueueProvider();
+  // Subscribe to live Firestore queue changes so in-memory state stays in sync
+  // with updates made by the client (e.g. removing entries via the web UI).
+  subscribeToQueue(
+    (entries) => {
+      setFirestoreListenerActive(true);
+      hydrateQueueMemory(entries);
+    },
+    (err) => {
+      console.error('Firestore queue listener error — falling back to local state:', err);
+      setFirestoreListenerActive(false);
+    }
+  );
 
   // Second WebSocket connection for broadcaster-owned subscriptions (channel points).
   // Must be separate because Twitch requires all subscriptions on a session to use the same user token.
@@ -106,7 +116,7 @@ import { markFirstTimeChatter } from './detectables/shared.js';
       }
 
       if (command === 'raid') {
-        handleRaidCommand(chatEvent, provider);
+        handleRaidCommand(chatEvent);
       } else if (command === 'code') {
         sendChatMessage(messages.hintAddCodeFirst);
       } else if (command === 'help') {
@@ -123,26 +133,26 @@ import { markFirstTimeChatter } from './detectables/shared.js';
       } else if (command === 'commands') {
         handleCommandsCommand(chatEvent);
       } else if (command === 'leave') {
-        handleLeaveCommand(chatEvent, provider);
+        handleLeaveCommand(chatEvent);
       } else if (command === 'clear' || command === 'open' || command === 'close' || command === 'list' || command === 'groups' || command === 'add' || command === 'remove' || command === 'strike' || command === 'hintcooldown' || command === 'spamwindow') {
         if (!isPrivileged(chatEvent)) {
           sendChatMessage(`@${chatEvent.chatter_user_login} you do not have permissions for that command`);
           return;
         }
         if (command === 'clear') {
-          handleClearCommand(chatEvent, provider);
+          handleClearCommand(chatEvent);
         } else if (command === 'open') {
           handleOpenCommand(chatEvent);
         } else if (command === 'close') {
           handleCloseCommand(chatEvent);
         } else if (command === 'list') {
-          handleListCommand(chatEvent, provider);
+          handleListCommand(chatEvent);
         } else if (command === 'groups') {
-          handleGroupsCommand(chatEvent, provider);
+          handleGroupsCommand(chatEvent);
         } else if (command === 'add') {
-          handleAddCommand(chatEvent, provider);
+          handleAddCommand(chatEvent);
         } else if (command === 'remove') {
-          handleRemoveCommand(chatEvent, provider);
+          handleRemoveCommand(chatEvent);
         } else if (command === 'strike') {
           handleStrikeCommand(chatEvent);
         } else if (command === 'hintcooldown') {

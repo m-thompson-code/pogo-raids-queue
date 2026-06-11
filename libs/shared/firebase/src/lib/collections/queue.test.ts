@@ -100,6 +100,7 @@ describe('addToQueue', () => {
       pogoUsername: 'CoolTrainer',
       isSubscriber: true,
       isVip: false,
+      status: 'joined',
       joinedAt: SENTINEL_TIMESTAMP,
     });
   });
@@ -170,6 +171,7 @@ describe('getQueue', () => {
             pogoUsername: 'Alice99',
             isSubscriber: false,
             isVip: true,
+            status: 'invited',
             joinedAt: { toDate: () => fakeDate },
           }),
         },
@@ -185,6 +187,7 @@ describe('getQueue', () => {
       pogoUsername: 'Alice99',
       isSubscriber: false,
       isVip: true,
+      status: 'invited',
       joinedAt: fakeDate,
     });
   });
@@ -228,6 +231,27 @@ describe('getQueue', () => {
 
     expect(mockOrderBy).toHaveBeenCalledWith('joinedAt', 'asc');
   });
+
+  it('defaults status to joined when field is missing from document', async () => {
+    mockCollectionGet.mockResolvedValue({
+      docs: [
+        {
+          data: () => ({
+            twitchUserId: 'user-3',
+            twitchUsername: 'charlie',
+            pogoUsername: 'Charlie1',
+            isSubscriber: false,
+            isVip: false,
+            joinedAt: { toDate: () => new Date() },
+          }),
+        },
+      ],
+    });
+
+    const result = await getQueue();
+
+    expect(result[0].status).toBe('joined');
+  });
 });
 
 // ── addManualToQueue ──────────────────────────────────────────────────────────
@@ -248,6 +272,7 @@ describe('addManualToQueue', () => {
       pogoUsername: 'ManualTrainer',
       isSubscriber: false,
       isVip: false,
+      status: 'joined',
       joinedAt: SENTINEL_TIMESTAMP,
     });
   });

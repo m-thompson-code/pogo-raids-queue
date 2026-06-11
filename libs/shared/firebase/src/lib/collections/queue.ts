@@ -32,6 +32,7 @@ export const addToQueue = async (params: RaidParams): Promise<void> => {
     if (!existing.exists) {
       transaction.set(queueRef, {
         ...profileFields,
+        status: 'joined',
         joinedAt: FieldValue.serverTimestamp(),
       });
     } else {
@@ -62,6 +63,7 @@ export const getQueue = async (): Promise<
     pogoUsername: string;
     isSubscriber: boolean;
     isVip: boolean;
+    status: 'joined' | 'invited';
     joinedAt: Date;
   }>
 > => {
@@ -77,6 +79,7 @@ export const getQueue = async (): Promise<
       pogoUsername: data['pogoUsername'] as string,
       isSubscriber: data['isSubscriber'] as boolean,
       isVip: data['isVip'] as boolean,
+      status: (data['status'] as 'joined' | 'invited') ?? 'joined',
       joinedAt: (data['joinedAt']?.toDate?.() ?? new Date()) as Date,
     };
   });
@@ -102,6 +105,7 @@ export const addManualToQueue = async (pogoUsername: string): Promise<void> => {
         pogoUsername,
         isSubscriber: false,
         isVip: false,
+        status: 'joined',
         joinedAt: FieldValue.serverTimestamp(),
       });
     }
@@ -141,4 +145,37 @@ export const removeFromQueueByPogoUsername = async (
   if (!match) return false;
   await match.ref.delete();
   return true;
+};
+
+/**
+ * Subscribes to real-time changes on the `raidQueue` collection.
+ *
+ * Calls `onSnapshot` with the full current set of entries whenever any
+ * document is added, modified, or deleted — allowing callers to keep
+ * in-memory state in sync with Firestore.
+ *
+ * Returns the unsubscribe function.
+ */
+export const subscribeToQueue = (
+  callback: (entries: Array<{ twitchUserId: string; pogoUsername: string; status: 'joined' | 'invited' }>) => void,
+  onError?: (error: Error) => void,
+): (() => void) => {
+  return getDb().collection('raidQueue').onSnapshot((snapshot) => {
+    const entries = snapshot.docs.map((d) => ({
+      twitchUserId: d.data()['twitchUserId'] as string,
+      pogoUsername: d.data()['pogoUsername'] as string,
+      status: (d.data()['status'] as 'joined' | 'invited') ?? 'joined',
+    }));
+    callback(entries);
+  }, onError);
+};
+
+/**
+ * Updates the `status` field of a single raidQueue entry.
+ */
+export const updateQueueEntryStatus = async (
+  twitchUserId: string,
+  status: 'joined' | 'invited',
+): Promise<void> => {
+  await getDb().collection('raidQueue').doc(twitchUserId).update({ status });
 };

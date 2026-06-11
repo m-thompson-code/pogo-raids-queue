@@ -30,11 +30,13 @@ export class InMemoryQueueProvider implements QueueProvider {
       // Already in queue — update profile fields, preserve joinedAt
       this.queue.set(params.twitchUserId, {
         ...params,
+        status: existing.status,
         joinedAt: existing.joinedAt,
       });
     } else {
       this.queue.set(params.twitchUserId, {
         ...params,
+        status: 'joined',
         joinedAt: new Date(),
       });
     }
@@ -59,6 +61,7 @@ export class InMemoryQueueProvider implements QueueProvider {
         pogoUsername,
         isSubscriber: false,
         isVip: false,
+        status: 'joined',
         joinedAt: new Date(),
       });
     }
@@ -78,5 +81,10 @@ export class InMemoryQueueProvider implements QueueProvider {
       }
     }
     return false;
+  }
+
+  async setEntryStatus(twitchUserId: string, status: 'joined' | 'invited'): Promise<void> {
+    const entry = this.queue.get(twitchUserId);
+    if (entry) this.queue.set(twitchUserId, { ...entry, status });
   }
 }

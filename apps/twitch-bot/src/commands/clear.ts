@@ -1,20 +1,17 @@
 import { sendChatMessage } from '../api/chat.js';
 import { messages } from '../messages.js';
-import type { QueueProvider } from '../providers/queue-provider.js';
+import { clearQueueMemory, isFirestoreListenerActive } from '../detectables/shared.js';
+import { queue } from '../providers/queue.js';
 import type { ChatMessageEvent } from '../types.js';
 
-/**
- * Handles the `!clear` chat command.
- *
- * Removes all entries from the raid queue and replies in chat confirming.
- *
- * @param event    - The `channel.chat.message` event
- * @param provider - The queue provider to clear
- */
 export const handleClearCommand = async (
-  event: ChatMessageEvent,
-  provider: QueueProvider
+  event: ChatMessageEvent
 ): Promise<void> => {
-  await provider.clearQueue();
+  try {
+    await queue.clearQueue();
+    if (!isFirestoreListenerActive()) clearQueueMemory();
+  } catch {
+    clearQueueMemory();
+  }
   await sendChatMessage(messages.clearSuccess(event.chatter_user_login));
 };

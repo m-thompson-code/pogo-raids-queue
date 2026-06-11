@@ -5,9 +5,10 @@ vi.mock('../api/chat.js', () => ({ sendChatMessage: vi.fn() }));
 vi.mock('../messages.js', () => ({
   messages: { listEmpty: () => 'listEmpty' },
 }));
+vi.mock('../providers/queue.js', () => ({ queue: { getQueue: vi.fn() } }));
 
 import { sendChatMessage } from '../api/chat.js';
-import type { QueueProvider } from '../providers/queue-provider.js';
+import { queue } from '../providers/queue.js';
 
 const makeEntry = (pogoUsername: string) => ({
   pogoUsername,
@@ -16,16 +17,6 @@ const makeEntry = (pogoUsername: string) => ({
   isSubscriber: false,
   isVip: false,
   joinedAt: new Date(),
-});
-
-const mockProvider = (entries: ReturnType<typeof makeEntry>[]): QueueProvider => ({
-  getQueue: vi.fn().mockResolvedValue(entries),
-  upsertUser: vi.fn(),
-  addToQueue: vi.fn(),
-  clearQueue: vi.fn(),
-  addManual: vi.fn(),
-  removeByTwitchId: vi.fn(),
-  removeByPogoUsername: vi.fn(),
 });
 
 const makeEvent = () => ({
@@ -39,13 +30,14 @@ beforeEach(() => vi.clearAllMocks());
 
 describe('handleListCommand', () => {
   it('sends empty message when queue is empty', async () => {
-    await handleListCommand(makeEvent() as any, mockProvider([]));
+    vi.mocked(queue.getQueue).mockResolvedValue([]);
+    await handleListCommand(makeEvent() as any);
     expect(sendChatMessage).toHaveBeenCalledWith('listEmpty');
   });
 
   it('lists comma-separated pogo usernames', async () => {
-    const entries = ['Ash', 'Misty', 'Brock'].map(makeEntry);
-    await handleListCommand(makeEvent() as any, mockProvider(entries));
+    vi.mocked(queue.getQueue).mockResolvedValue(['Ash', 'Misty', 'Brock'].map(makeEntry));
+    await handleListCommand(makeEvent() as any);
     expect(sendChatMessage).toHaveBeenCalledWith('Ash,Misty,Brock');
   });
 });
