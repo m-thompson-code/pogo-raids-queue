@@ -81,6 +81,10 @@ import { markFirstTimeChatter, hydrateQueueMemory, setFirestoreListenerActive } 
   connectBot(config.eventSubWebSocketUrl, registerEventSubListeners, async ({ subscriptionType, event }) => {
     if (subscriptionType === SubscriptionType.ChannelChatMessage) {
       const chatEvent = event as import('./types.js').ChatMessageEvent;
+
+      // Ignore messages from the bot itself to prevent feedback loops.
+      if (chatEvent.chatter_user_id === config.botUserId) return;
+
       const text = chatEvent.message.text.trim();
       const command = resolveCommand(text);
 
@@ -162,7 +166,6 @@ import { markFirstTimeChatter, hydrateQueueMemory, setFirestoreListenerActive } 
         }
       } else {
         if (text.startsWith('!')) return;
-        if (chatEvent.chatter_user_id === config.botUserId) return;
         if (checkSpam(chatEvent)) return;
         runDetectables(chatEvent);
       }
