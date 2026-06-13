@@ -32,7 +32,12 @@ export const handleInvitedCommand = async (
       await sendChatMessage(messages.raidMissingUsername(chatter_user_login));
       return;
     }
-    await sendChatMessage(messages.invitedNotInQueue(chatter_user_login));
+    const now = Date.now();
+    const cooldownMs = getInvitedCooldownMs();
+    if (cooldownMs === 0 || now - lastInvitedMessageAt >= cooldownMs) {
+      lastInvitedMessageAt = now;
+      await sendChatMessage(messages.invitedSuccess);
+    }
     return;
   }
 

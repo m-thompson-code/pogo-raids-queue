@@ -17,6 +17,7 @@ export class RaidQueueComponent {
   protected readonly snackbar = signal<string | null>(null);
   protected readonly addInput = signal('');
   protected readonly lastClearedAt = signal<Date | null>(null);
+  protected readonly notesVisible = signal(false);
   private snackbarTimer: ReturnType<typeof setTimeout> | null = null;
 
   private showSnackbar(message: string): void {

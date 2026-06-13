@@ -58,13 +58,26 @@ describe('handleInvitedCommand', () => {
     expect(sendChatMessage).toHaveBeenCalledWith('raidMissingUsername:moo');
   });
 
-  it('sends invitedNotInQueue when user is not in queue but has a pogo username', async () => {
+  it('sends invitedSuccess when user is not in queue but has a pogo username', async () => {
     vi.mocked(isInQueue).mockReturnValue(false);
     vi.mocked(getUser).mockResolvedValue({ pogoUsername: 'TrainerAsh' } as any);
+    vi.mocked(getInvitedCooldownMs).mockReturnValue(0);
 
     await handleInvitedCommand(makeEvent() as any);
 
-    expect(sendChatMessage).toHaveBeenCalledWith('invitedNotInQueue:moo');
+    expect(sendChatMessage).toHaveBeenCalledWith('invitedSuccess');
+  });
+
+  it('respects cooldown when user is not in queue but has a pogo username', async () => {
+    vi.mocked(isInQueue).mockReturnValue(false);
+    vi.mocked(getUser).mockResolvedValue({ pogoUsername: 'TrainerAsh' } as any);
+    vi.mocked(getInvitedCooldownMs).mockReturnValue(0);
+    await handleInvitedCommand(makeEvent() as any);
+    vi.mocked(sendChatMessage).mockClear();
+
+    vi.mocked(getInvitedCooldownMs).mockReturnValue(60_000);
+    await handleInvitedCommand(makeEvent() as any);
+    expect(sendChatMessage).not.toHaveBeenCalled();
   });
 
   it('does nothing when user is already marked as invited', async () => {

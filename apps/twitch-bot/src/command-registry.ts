@@ -42,13 +42,13 @@ export const COMMAND_REGISTRY: CommandMeta[] = [
   {
     command: 'list',
     usage: '!list',
-    permission: 'everyone',
+    permission: 'mods',
     description: 'Lists the current queue',
   },
   {
     command: 'groups',
     usage: '!groups',
-    permission: 'everyone',
+    permission: 'mods',
     description: 'Lists the queue grouped in sets of 5',
   },
   {

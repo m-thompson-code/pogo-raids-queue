@@ -82,6 +82,24 @@
     align-items: center;
     flex-wrap: wrap;
   }
+
+  &__notes {
+    padding: 0.45rem 0.75rem;
+    font-size: 1rem;
+    border: 1px solid var(--btn-border);
+    border-radius: 0.4rem;
+    background: var(--pill-bg);
+    color: var(--pill-color);
+    outline: none;
+    width: 100%;
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color 0.15s;
+
+    &:focus {
+      border-color: #9147ff;
+    }
+  }
 }
 
 // ── Toolbar buttons ────────────────────────────────────────────────────────
