@@ -100,6 +100,8 @@ import { hydrateQueueMemory, setFirestoreListenerActive } from './detectables/sh
       // Ignore messages from the bot itself to prevent feedback loops.
       if (chatEvent.chatter_user_id === config.botUserId) return;
 
+      console.log(`MSG <${chatEvent.chatter_user_login}> ${chatEvent.message.text}`);
+
       const text = chatEvent.message.text.trim();
       const command = resolveCommand(text);
 
@@ -107,9 +109,11 @@ import { hydrateQueueMemory, setFirestoreListenerActive } from './detectables/sh
       // Fires with a 1-in-10 chance and at most once per 5 minutes.
       if (chatEvent.message.fragments.some((f) => f.text === 'poketra1Regirice')) {
         const now = Date.now();
-        if (now - lastRegiriceAt >= REGIRICE_COOLDOWN_MS && Math.random() < 0.1) {
+        const seed = Math.random();
+        if (now - lastRegiriceAt >= REGIRICE_COOLDOWN_MS && seed < 0.1) {
           lastRegiriceAt = now;
-          triggerRegirice();
+          console.log(`[REGIRICE] trigger (sent by ${chatEvent.chatter_user_login})`);
+          if (!config.dryRun) triggerRegirice();
         }
       }
 

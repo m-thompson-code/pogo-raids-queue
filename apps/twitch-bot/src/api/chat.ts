@@ -15,6 +15,11 @@ export const sendChatMessage = async (chatMessage: string): Promise<void> => {
     return;
   }
 
+  if (config.dryRun) {
+    console.log(`[DRY RUN] would send: ${chatMessage}`);
+    return;
+  }
+
   const response = await fetch('https://api.twitch.tv/helix/chat/messages', {
     method: 'POST',
     headers: {

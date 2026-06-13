@@ -26,4 +26,11 @@ export const config = {
 
   /** Twitch EventSub WebSocket endpoint */
   eventSubWebSocketUrl: 'wss://eventsub.wss.twitch.tv/ws',
+
+  /**
+   * When true, the bot subscribes to chat and processes all commands but
+   * never actually sends messages or writes to Firestore.
+   * Set DRY_RUN=true to enable.
+   */
+  dryRun: process.env['DRY_RUN'] === 'true',
 } as const;
