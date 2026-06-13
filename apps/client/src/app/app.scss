@@ -1,3 +1,29 @@
+// ── Regirice spawn ─────────────────────────────────────────────────────────
+
+@keyframes regirice-rise {
+  0%   { bottom: -220px; }
+  100% { bottom: calc(100vh - 250px); }
+}
+
+@keyframes regirice-fall {
+  0%   { bottom: calc(100vh - 250px); }
+  100% { bottom: -220px; }
+}
+
+.regirice-sprite {
+  position: fixed;
+  bottom: -220px;
+  width: 200px;
+  pointer-events: none;
+  z-index: 1000;
+  transform: translateX(-50%) scaleX(var(--flip, 1));
+  animation:
+    regirice-rise 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
+    regirice-fall 1s cubic-bezier(0.4, 0, 1, 1) 1s forwards;
+}
+
+// ── Nav ────────────────────────────────────────────────────────────────────
+
 .app-nav {
   display: flex;
   gap: 0.25rem;

@@ -20,7 +20,7 @@ import { handleSpamWindowCommand } from './commands/spam-window.js';
 import { handleEnableCommand, handleDisableCommand } from './commands/enable-disable.js';
 import { handleCommandsCommand } from './commands/commands.js';
 import { checkSpam } from './detectables/spam-detection.js';
-import { subscribeToQueue } from '@pogo-raid-system/firebase';
+import { subscribeToQueue, triggerRegirice } from '@pogo-raid-system/firebase';
 import { isPrivileged } from './permissions.js';
 import { sendChatMessage, registerEventSubListeners, registerBroadcasterEventSubListeners } from './api/chat.js';
 import { messages } from './messages.js';
@@ -58,6 +58,8 @@ import { hydrateQueueMemory, setFirestoreListenerActive } from './detectables/sh
   }
 
   const infoCooldownMap = new Map<string, number>();
+  let lastRegiriceAt = 0;
+  const REGIRICE_COOLDOWN_MS = 5 * 60 * 1000;
 
   // Subscribe to live Firestore queue changes so in-memory state stays in sync
   // with updates made by the client (e.g. removing entries via the web UI).
@@ -100,6 +102,16 @@ import { hydrateQueueMemory, setFirestoreListenerActive } from './detectables/sh
 
       const text = chatEvent.message.text.trim();
       const command = resolveCommand(text);
+
+      // Detect the Regirice emote in any fragment and trigger the UI animation.
+      // Fires with a 1-in-10 chance and at most once per 5 minutes.
+      if (chatEvent.message.fragments.some((f) => f.text === 'poketra1Regirice')) {
+        const now = Date.now();
+        if (now - lastRegiriceAt >= REGIRICE_COOLDOWN_MS && Math.random() < 0.1) {
+          lastRegiriceAt = now;
+          triggerRegirice();
+        }
+      }
 
       if (command) {
         console.log(`CMD !${command} <${chatEvent.chatter_user_login}>`);

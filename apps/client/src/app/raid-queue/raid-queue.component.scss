@@ -116,6 +116,11 @@
   outline: none;
   transition: background 0.15s, color 0.15s;
 
+  &:focus-visible {
+    outline: 2px solid #9147ff;
+    outline-offset: 2px;
+  }
+
   &:hover,
   &:active {
     background: var(--btn-hover-bg);
@@ -180,6 +185,8 @@
 
     &:focus {
       border-color: #9147ff;
+      outline: 2px solid #9147ff;
+      outline-offset: 2px;
     }
   }
 
@@ -258,6 +265,11 @@
     color: #fff;
   }
 
+  &:focus-visible {
+    outline: 2px solid #9147ff;
+    outline-offset: 2px;
+  }
+
   &__sub-badge {
     width: 1em;
     height: 1em;
@@ -287,6 +299,12 @@
     &:hover {
       color: #fff;
       background: rgba(0, 0, 0, 0.2);
+    }
+
+    &:focus-visible {
+      outline: 2px solid #9147ff;
+      outline-offset: 1px;
+      color: #fff;
     }
   }
 

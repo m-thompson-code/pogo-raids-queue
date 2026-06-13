@@ -40,7 +40,9 @@
                 [class.pill--invited]="entry.status === 'invited'"
                 [class.pill--copied]="entry.status === 'copied'"
                 [attr.data-twitch]="entry.twitchUsername || 'Manual entry'"
+                tabindex="0"
                 (click)="copyEntry(entry)"
+                (keydown.enter)="copyEntry(entry)"
                 (mousedown)="toggleEntryStatus(entry, $event)"
                 (contextmenu)="$event.preventDefault()">
                 @if (entry.isSubscriber) {
