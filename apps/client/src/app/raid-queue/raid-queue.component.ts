@@ -17,8 +17,27 @@ export class RaidQueueComponent {
   protected readonly snackbar = signal<string | null>(null);
   protected readonly addInput = signal('');
   protected readonly lastClearedAt = signal<Date | null>(null);
-  protected readonly notesVisible = signal(false);
+  protected readonly notesVisible = signal(localStorage.getItem('raid-notes-visible') === 'true');
+  protected readonly notesText = signal(localStorage.getItem('raid-notes-text') ?? '');
+  protected readonly notesHeight = signal(localStorage.getItem('raid-notes-height') ?? '');
   private snackbarTimer: ReturnType<typeof setTimeout> | null = null;
+
+  protected saveNotesText(value: string): void {
+    this.notesText.set(value);
+    localStorage.setItem('raid-notes-text', value);
+  }
+
+  protected saveNotesHeight(height: string): void {
+    if (!height) return;
+    this.notesHeight.set(height);
+    localStorage.setItem('raid-notes-height', height);
+  }
+
+  protected toggleNotes(): void {
+    const next = !this.notesVisible();
+    this.notesVisible.set(next);
+    localStorage.setItem('raid-notes-visible', String(next));
+  }
 
   private showSnackbar(message: string): void {
     if (this.snackbarTimer) clearTimeout(this.snackbarTimer);

@@ -2,12 +2,16 @@
   @let queue = queue$ | async;
   @if (queue !== null) {
     @if (notesVisible()) {
-      <textarea class="queue__notes" rows="3"></textarea>
+      <textarea class="queue__notes" rows="3"
+        [value]="notesText()"
+        [style.height]="notesHeight()"
+        (input)="saveNotesText($any($event.target).value)"
+        (mouseup)="saveNotesHeight($any($event.target).style.height)"></textarea>
     }
     <div class="queue__toolbar">
       <button class="toolbar-btn" (click)="copyAll(queue)">Copy all</button>
       <button class="toolbar-btn toolbar-btn--danger" (click)="clearAll(queue)">Clear all</button>
-      <button class="toolbar-btn" (click)="notesVisible.set(!notesVisible())">{{ notesVisible() ? 'Hide notes' : 'Notes' }}</button>
+      <button class="toolbar-btn" (click)="toggleNotes()">{{ notesVisible() ? 'Hide notes' : 'Notes' }}</button>
       <form class="toolbar-add" (submit)="$event.preventDefault(); addUser()">
         <input
           class="toolbar-add__input"

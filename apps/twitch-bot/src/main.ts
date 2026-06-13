@@ -205,7 +205,7 @@ import { hydrateQueueMemory, setFirestoreListenerActive } from './detectables/sh
           return;
         }
         const rawCount = text.trim().split(/\s+/)[1];
-        const count = Math.min(10, Math.max(1, parseInt(rawCount ?? '1', 10) || 1));
+        const count = Math.min(69, Math.max(1, parseInt(rawCount ?? '1', 10) || 1));
         console.log(`[REGIRICE] x${count} triggered by ${chatEvent.chatter_user_login}`);
         if (!config.dryRun) {
           for (let i = 0; i < count; i++) {
