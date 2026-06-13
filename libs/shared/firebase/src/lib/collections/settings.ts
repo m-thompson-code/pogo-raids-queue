@@ -2,13 +2,13 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getDb } from '../core/firebase.js';
 
 /**
- * Writes a new server timestamp to `settings/ui.regirice`.
+ * Increments the `regirice` counter in `settings/ui`.
  * The Angular client listens to this document and triggers the
- * Regirice animation whenever the timestamp changes.
+ * Regirice animation whenever the counter changes.
  */
 export const triggerRegirice = async (): Promise<void> => {
   await getDb()
     .collection('settings')
     .doc('ui')
-    .set({ regirice: FieldValue.serverTimestamp() }, { merge: true });
+    .set({ regirice: FieldValue.increment(1) }, { merge: true });
 };

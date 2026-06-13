@@ -18,8 +18,8 @@ export class App implements OnInit, OnDestroy {
   private readonly uiSettings = inject(UiSettingsService);
   private regiriceSub: Subscription | null = null;
 
-  protected readonly regiricePlaying = signal(false);
-  protected readonly regiriceSpriteStyle = signal('');
+  protected readonly regirice = signal<{ id: number; style: string }[]>([]);
+  private nextId = 0;
 
   ngOnInit(): void {
     this.regiriceSub = this.uiSettings.regirice$.subscribe(() => this.spawnRegirice());
@@ -30,13 +30,13 @@ export class App implements OnInit, OnDestroy {
   }
 
   protected spawnRegirice(): void {
-    if (this.regiricePlaying()) return;
-    const offsetX = Math.round((Math.random() * 30) - 15); // -15% to +15%
+    const id = this.nextId++;
+    const offsetX = Math.round((Math.random() * 30) - 15);
     const scaleX = Math.random() < 0.5 ? 1 : -1;
-    this.regiriceSpriteStyle.set(
-      `left: calc(50% + ${offsetX}%); --flip: ${scaleX};`
-    );
-    this.regiricePlaying.set(true);
-    setTimeout(() => this.regiricePlaying.set(false), 2050);
+    const style = `left: calc(50% + ${offsetX}%); --flip: ${scaleX};`;
+    this.regirice.update((sprites) => [...sprites, { id, style }]);
+    setTimeout(() => {
+      this.regirice.update((sprites) => sprites.filter((s) => s.id !== id));
+    }, 2050);
   }
 }

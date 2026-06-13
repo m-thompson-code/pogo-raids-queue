@@ -112,6 +112,12 @@ export const COMMAND_REGISTRY: CommandMeta[] = [
     description: 'Disables a command (enable/disable cannot be disabled)',
   },
   {
+    command: 'regirice',
+    usage: '!regirice',
+    permission: 'mods',
+    description: 'Force-triggers the Regirice animation',
+  },
+  {
     command: 'discord',
     usage: '!discord',
     permission: 'everyone',

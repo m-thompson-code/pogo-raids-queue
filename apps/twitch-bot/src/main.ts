@@ -110,7 +110,8 @@ import { hydrateQueueMemory, setFirestoreListenerActive } from './detectables/sh
       if (chatEvent.message.fragments.some((f) => f.text === 'poketra1Regirice')) {
         const now = Date.now();
         const seed = Math.random();
-        if (now - lastRegiriceAt >= REGIRICE_COOLDOWN_MS && seed < 0.1) {
+        console.log('Regirice emote detected in message fragments', seed);
+        if (now - lastRegiriceAt >= REGIRICE_COOLDOWN_MS && seed < 0.25) {
           lastRegiriceAt = now;
           console.log(`[REGIRICE] trigger (sent by ${chatEvent.chatter_user_login})`);
           if (!config.dryRun) triggerRegirice();
@@ -196,6 +197,20 @@ import { hydrateQueueMemory, setFirestoreListenerActive } from './detectables/sh
           handleHintCooldownCommand(chatEvent);
         } else if (command === 'spamwindow') {
           handleSpamWindowCommand(chatEvent);
+        }
+      } else if (command === 'regirice') {
+        const canRegirice = isPrivileged(chatEvent) || chatEvent.badges.some((b) => b.set_id === 'vip');
+        if (!canRegirice) {
+          sendChatMessage(`@${chatEvent.chatter_user_login} you do not have permissions for that command`);
+          return;
+        }
+        const rawCount = text.trim().split(/\s+/)[1];
+        const count = Math.min(10, Math.max(1, parseInt(rawCount ?? '1', 10) || 1));
+        console.log(`[REGIRICE] x${count} triggered by ${chatEvent.chatter_user_login}`);
+        if (!config.dryRun) {
+          for (let i = 0; i < count; i++) {
+            setTimeout(() => triggerRegirice(), i * 200);
+          }
         }
       } else {
         if (text.startsWith('!')) return;

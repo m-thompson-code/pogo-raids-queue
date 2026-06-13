@@ -1,5 +1,22 @@
 // ── Regirice spawn ─────────────────────────────────────────────────────────
 
+.regirice-btn {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+  z-index: 999;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
 @keyframes regirice-rise {
   0%   { bottom: -220px; }
   100% { bottom: calc(100vh - 250px); }

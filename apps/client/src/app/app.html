@@ -9,8 +9,9 @@
   </nav>
   <router-outlet />
   <app-settings />
-  @if (regiricePlaying()) {
-    <img class="regirice-sprite" src="regirice.png" alt="Regirice" [style]="regiriceSpriteStyle()" />
+  <button class="regirice-btn" (click)="spawnRegirice()">🧊</button>
+  @for (sprite of regirice(); track sprite.id) {
+    <img class="regirice-sprite" src="regirice.png" alt="Regirice" [style]="sprite.style" />
   }
 } @else {
   <app-login />
