@@ -34,7 +34,9 @@ export class App implements OnInit, OnDestroy {
     const spriteHalfWidth = 100;
     const left = Math.floor(Math.random() * (window.innerWidth - spriteHalfWidth * 2)) + spriteHalfWidth;
     const scaleX = Math.random() < 0.5 ? 1 : -1;
-    const style = `left: ${left}px; --flip: ${scaleX};`;
+    const basePeak = window.innerHeight - 250;
+    const peakOffset = Math.round(Math.random() * 160) - 80;
+    const style = `left: ${left}px; --flip: ${scaleX}; --peak: ${basePeak + peakOffset}px;`;
     this.regirice.update((sprites) => [...sprites, { id, style }]);
     setTimeout(() => {
       this.regirice.update((sprites) => sprites.filter((s) => s.id !== id));

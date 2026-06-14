@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { RaidQueueService, type QueueEntry } from './raid-queue.service';
 
-const GROUP_SIZE = 5;
+const GROUP_SIZE = 10;
 
 @Component({
   selector: 'app-raid-queue',

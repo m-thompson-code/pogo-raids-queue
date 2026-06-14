@@ -17,11 +17,11 @@
 
 @keyframes regirice-rise {
   0%   { bottom: -220px; }
-  100% { bottom: calc(100vh - 250px); }
+  100% { bottom: var(--peak, calc(100vh - 250px)); }
 }
 
 @keyframes regirice-fall {
-  0%   { bottom: calc(100vh - 250px); }
+  0%   { bottom: var(--peak, calc(100vh - 250px)); }
   100% { bottom: -220px; }
 }
 
