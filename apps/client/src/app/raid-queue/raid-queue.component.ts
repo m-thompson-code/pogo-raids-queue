@@ -2,8 +2,6 @@ import { Component, inject, signal } from '@angular/core';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { RaidQueueService, type QueueEntry } from './raid-queue.service';
 
-const GROUP_SIZE = 10;
-
 @Component({
   selector: 'app-raid-queue',
   imports: [AsyncPipe, DatePipe],
@@ -17,6 +15,13 @@ export class RaidQueueComponent {
   protected readonly snackbar = signal<string | null>(null);
   protected readonly addInput = signal('');
   protected readonly lastClearedAt = signal<Date | null>(null);
+  protected readonly groupSize = signal<5 | 10>(Number(localStorage.getItem('raid-group-size') ?? 10) === 5 ? 5 : 10);
+
+  protected toggleGroupSize(): void {
+    const next = this.groupSize() === 5 ? 10 : 5;
+    this.groupSize.set(next);
+    localStorage.setItem('raid-group-size', String(next));
+  }
   protected readonly notesVisible = signal(localStorage.getItem('raid-notes-visible') === 'true');
   protected readonly notesText = signal(localStorage.getItem('raid-notes-text') ?? '');
   protected readonly notesHeight = signal(localStorage.getItem('raid-notes-height') ?? '');
@@ -46,9 +51,10 @@ export class RaidQueueComponent {
   }
 
   protected toGroups(queue: QueueEntry[]): QueueEntry[][] {
+    const size = this.groupSize();
     const groups: QueueEntry[][] = [];
-    for (let i = 0; i < queue.length; i += GROUP_SIZE) {
-      groups.push(queue.slice(i, i + GROUP_SIZE));
+    for (let i = 0; i < queue.length; i += size) {
+      groups.push(queue.slice(i, i + size));
     }
     return groups;
   }
