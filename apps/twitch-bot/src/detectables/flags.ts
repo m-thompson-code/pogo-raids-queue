@@ -29,15 +29,24 @@ export const REQUESTING_PATTERNS = [
   /\bsign\s+(me|my)\s+up\b/,
   /\bjoin\s+(the\s+)?(raid|queue)\b/,
   /\bmy\s+code\s+is\b/,
-  // "username for pokemon" shorthand — e.g. "3moo5u for groupon" or "3moo5u for the groupon" (optional plz/pls/please suffix)
-  /^\S{3,}\s+for\s+(the\s+)?\S{3,}(\s+(plz|pls|please))?\s*$/,
 ];
+
+const USERNAME_FOR_POKEMON_PATTERN = /(?:^|\s)([a-z0-9_]{3,})\s+for\s+(the\s+)?\S{3,}(\s+(plz|pls|please))?(?=$|\s)/;
+const REQUEST_CUE_WORDS_PATTERN = /\b(add|invite|join|queue)\b/;
 
 /** True if the message is explicitly requesting to be added or invited to the raid. */
 export const isRequesting = (lower: string): boolean => {
   if (/\b(not|won't|wont|never)\s+(join|joining)\b/.test(lower)) return false;
   if (/\badd\s+(me|you|them)\s+back\b/.test(lower)) return false;
-  return REQUESTING_PATTERNS.some((p) => p.test(lower));
+  if (REQUESTING_PATTERNS.some((p) => p.test(lower))) return true;
+
+  const shorthandMatch = lower.match(USERNAME_FOR_POKEMON_PATTERN);
+  if (!shorthandMatch) return false;
+
+  const usernameToken = shorthandMatch[1] ?? '';
+  if (/\d/.test(usernameToken)) return true;
+
+  return REQUEST_CUE_WORDS_PATTERN.test(lower);
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -45,8 +54,10 @@ export const isRequesting = (lower: string): boolean => {
 /** Matches messages where the user is asking how to join. */
 export const ASKING_QUESTION_PATTERNS = [
   /\bhow\s+(do\s+i|can\s+i|to)\b/,
+  /\bhow\s+i\s+get\s+on(\s+the)?\s+(queue|que|list|raid)\b/,
   /\bcan\s+(i|u)\s+join\b/,
   /\bwhat'?s?\s+(your|the|is)\s+(\w+\s+)?code\b/,
+  /\byour\s+number\b/,
 ];
 
 /** True if the message is asking how to participate in the raid. */
@@ -58,6 +69,8 @@ export const isAskingQuestion = (lower: string): boolean =>
 /** Matches the word "code", "fc", "friend request", or a literal Pokémon GO friend code (12 digits or 3×4 digits). */
 export const CODE_PATTERNS = [
   /\bcode\b/,
+  /\byour\s+number\b/,
+  /\bfriendcode\b/,
   /\bfc\b/,
   /\bfriend\s+request\b/,
   /\b\d{12}\b/,
@@ -83,7 +96,7 @@ export const involvesQueue = (lower: string): boolean =>
 
 /** Matches messages that mention a raid or queue. */
 export const RAID_PATTERNS = [
-  /\b(raid|queue|que)\b/,
+  /\b(raids?|queue|que)\b/,
 ];
 
 /** True if the message mentions a raid or queue. */

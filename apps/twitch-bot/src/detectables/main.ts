@@ -15,6 +15,7 @@ let lastHintAt = 0;
  *
  * Flags are combined in priority order:
  *   requesting + code                              → streamer won't add their code; prompt to add ours instead
+ *   "how do i add u/you"                          → full !help message
  *   first time + (requesting | queue | raid)        → full !help message
  *   (asking | begging) + code                       → add-code-first hint (!code)
  *   literal "code" / "code?"                        → add-code-first hint
@@ -32,6 +33,7 @@ export const detectHint = (event: ChatMessageEvent): string | null => {
   const raidInvolved = involvesRaid(lower);
 
   if (requesting && codeInvolved) return messages.hintStreamerWontAdd;
+  if (/\bhow\s+do\s+i\s+add\s+(u|you)\b/.test(lower)) return messages.help;
   if (firstTime && (requesting || queueInvolved || raidInvolved)) return messages.help;
   if (/^code\??$/i.test(lower)) return messages.hintAddCodeFirst;
   if ((askingQuestion || begging) && codeInvolved) return messages.hintAddCodeFirst;

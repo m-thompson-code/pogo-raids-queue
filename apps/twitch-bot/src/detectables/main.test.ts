@@ -227,6 +227,10 @@ describe('first-time chatter + (requesting | queue | raid) → help', () => {
   it('returns null when requesting but not first-time', () => {
     expect(detectHint(makeEvent('add me'))).toBeNull();
   });
+
+  it('returns help for "how do i add u" even when not first-time', () => {
+    expect(detectHint(makeEvent('how do i add u'))).toBe(messages.help);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -236,6 +240,10 @@ describe('first-time chatter + (requesting | queue | raid) → help', () => {
 describe('(asking | begging) + code → hintAddCodeFirst', () => {
   it('returns hintAddCodeFirst when begging and mentioning code', () => {
     expect(detectHint(makeEvent('code please'))).toBe(messages.hintAddCodeFirst);
+  });
+
+  it('returns hintAddCodeFirst for "your number"', () => {
+    expect(detectHint(makeEvent('your number'))).toBe(messages.hintAddCodeFirst);
   });
 
   it('returns hintAddCodeFirst for literal "code"', () => {
@@ -275,6 +283,7 @@ describe('(asking | begging) + requesting → hintUseRaidCommand', () => {
 describe('(asking | begging | requesting) + (queue | raid) → hintUseRaidCommand', () => {
   const cases: [string, string][] = [
     ['asking + queue',     'how do i join'],
+    ['asking + misspelled queue', 'how i get on que'],
     ['asking + raid',      'how do i join the raid'],
     ['requesting + queue', 'can i join'],
     ['begging + raid',     'join plz'],
@@ -307,6 +316,8 @@ describe('no match → null', () => {
     'lol',
     'pogchamp',
     'hello',
+    "you ain't raiding more than once a minute right? lol",
+    'excited for necrozma',
     "i'm lurking but i will not join the raid cause i'm never getting a shiny fr",
   ];
 

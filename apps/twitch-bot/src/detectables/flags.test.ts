@@ -72,6 +72,7 @@ describe('isRequesting', () => {
       'join queue',
       'ADD ME',
       '3moo5u for groupon',
+      'queue laiden for groupon',
       '3moo5u for groupon plz',
       '3moo5u for groupon pls',
       '3moo5u for groupon please',
@@ -94,6 +95,8 @@ describe('isRequesting', () => {
       'PLZ ADD',
       'add me back',
       'please add me back',
+      'laiden for necrozma',
+      'excited for necrozma',
     ];
     for (const msg of nonMatching) {
       it(`"${msg}"`, () => expect(isRequesting(msg.toLowerCase())).toBe(false));
@@ -111,6 +114,8 @@ describe('isAskingQuestion', () => {
       'can i join',
       'can u join',
       'how do i join',
+      'how i get on que',
+      'your number',
       'how do i join?',
       'how can i join',
       'how to join',
@@ -146,6 +151,8 @@ describe('involvesCode', () => {
     const matching = [
       'what is the code',
       "what's the code",
+      'your number',
+      'friendcode',
       'send the code',
       'give me the code',
       'the code?',
@@ -174,6 +181,7 @@ describe('involvesCode', () => {
       'add me please',
       'how do i join',
       'invite me to raid',
+      "you ain't raiding more than once a minute right? lol",
       'gg',
       'plz add me',
       // broadcaster's own code — already known, should not trigger
@@ -213,7 +221,7 @@ describe('involvesRaid', () => {
   });
 
   describe('matches', () => {
-    const matching = ['raid me', 'join the raid', 'how do i join the queue', 'in the que'];
+    const matching = ['raid me', 'join the raid', 'raids please', 'how do i join the queue', 'in the que'];
     for (const msg of matching) {
       it(`"${msg}"`, () => expect(involvesRaid(msg.toLowerCase())).toBe(true));
     }
