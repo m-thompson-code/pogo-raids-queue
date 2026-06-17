@@ -278,6 +278,30 @@
     user-select: none;
   }
 
+  &__vip-badge {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+    pointer-events: none;
+    user-select: none;
+    background-color: currentColor;
+    mask: url('/vip.svg') center / contain no-repeat;
+    -webkit-mask: url('/vip.svg') center / contain no-repeat;
+  }
+
+  &__wave-badge {
+    display: inline-block;
+    width: 1.15em;
+    height: 1.15em;
+    flex-shrink: 0;
+    pointer-events: none;
+    user-select: none;
+    background-color: currentColor;
+    mask: url('/new.svg') center / contain no-repeat;
+    -webkit-mask: url('/new.svg') center / contain no-repeat;
+  }
+
   &__remove {
     display: inline-flex;
     align-items: center;

@@ -5,10 +5,18 @@
   bottom: 1rem;
   right: 1rem;
   width: 22px;
+  padding: 0;
+  background: none;
+  border: none;
   cursor: pointer;
   opacity: 0.4;
   transition: opacity 0.15s;
   z-index: 999;
+
+  img {
+    display: block;
+    width: 100%;
+  }
 
   &:hover {
     opacity: 1;

@@ -144,6 +144,18 @@
     pointer-events: none;
     user-select: none;
   }
+
+  &__vip-badge {
+    display: block;
+    width: 13px;
+    height: 13px;
+    margin: 0 auto;
+    pointer-events: none;
+    user-select: none;
+    background-color: currentColor;
+    mask: url('/vip.svg') center / contain no-repeat;
+    -webkit-mask: url('/vip.svg') center / contain no-repeat;
+  }
 }
 
 // ── Sort icon ─────────────────────────────────────────────────────────────

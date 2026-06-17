@@ -1,10 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { RaidQueueService, type QueueEntry } from './raid-queue.service';
+import { IsTodayPipe } from './is-today.pipe';
 
 @Component({
   selector: 'app-raid-queue',
-  imports: [AsyncPipe, DatePipe],
+  imports: [AsyncPipe, DatePipe, IsTodayPipe],
   templateUrl: './raid-queue.component.html',
   styleUrl: './raid-queue.component.scss',
 })

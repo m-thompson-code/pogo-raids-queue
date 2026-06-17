@@ -52,6 +52,10 @@
                 (contextmenu)="$event.preventDefault()">
                 @if (entry.isSubscriber) {
                   <img class="pill__sub-badge" src="/sub-badge.png" alt="" aria-hidden="true">
+                } @else if (entry.isVip) {
+                  <span class="pill__vip-badge" role="img" aria-label="VIP"></span>
+                } @else if (entry.hasCreatedAt && (entry.createdAt | isToday)) {
+                  <span class="pill__wave-badge" role="img" aria-label="New today" title="Joined today"></span>
                 }
                 {{ entry.pogoUsername }}
                 <button class="pill__remove" (click)="$event.stopPropagation(); removeEntry(entry)">&#x2715;</button>

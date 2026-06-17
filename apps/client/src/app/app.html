@@ -9,7 +9,9 @@
   </nav>
   <router-outlet />
   <app-settings />
-  <img class="regirice-btn" src="/regirice.png" alt="Regirice" (click)="spawnRegirice()" />
+  <button class="regirice-btn" (click)="spawnRegirice()" aria-label="Spawn Regirice">
+    <img src="/regirice.png" alt="" aria-hidden="true" />
+  </button>
   @for (sprite of regirice(); track sprite.id) {
     <img class="regirice-sprite" src="regirice.png" alt="Regirice" [style]="sprite.style" />
   }

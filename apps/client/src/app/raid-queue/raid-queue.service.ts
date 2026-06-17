@@ -23,6 +23,8 @@ export interface QueueEntry {
   isVip: boolean;
   status: 'joined' | 'invited' | 'copied';
   joinedAt: Date;
+  createdAt: Date | null;
+  hasCreatedAt: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -43,6 +45,7 @@ export class RaidQueueService implements OnDestroy {
     this.unsubscribe = onSnapshot(q, (snapshot) => {
       const entries: QueueEntry[] = snapshot.docs.map((doc) => {
         const data = doc.data();
+        const hasCreatedAt = Object.hasOwn(data, 'createdAt');
         return {
           twitchUserId: data['twitchUserId'] as string,
           twitchUsername: data['twitchUsername'] as string,
@@ -51,6 +54,8 @@ export class RaidQueueService implements OnDestroy {
           isVip: data['isVip'] as boolean,
           status: (data['status'] as 'joined' | 'invited' | 'copied') ?? 'joined',
           joinedAt: data['joinedAt']?.toDate?.() ?? new Date(),
+          createdAt: data['createdAt']?.toDate?.() ?? null,
+          hasCreatedAt,
         };
       });
       this.queue$.next(entries);

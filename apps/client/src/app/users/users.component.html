@@ -59,7 +59,9 @@
               }
             </td>
             <td class="users-table__td users-table__td--center">
-              @if (user.isVip) { ✓ }
+              @if (user.isVip) {
+                <span class="users-table__vip-badge" role="img" aria-label="VIP"></span>
+              }
             </td>
             <td class="users-table__td">{{ user.lastRaided | date:'short' }}</td>
             <td class="users-table__td users-table__td--right">{{ user.raidCount }}</td>

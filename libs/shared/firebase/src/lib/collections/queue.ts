@@ -17,9 +17,14 @@ import type { RaidParams } from '../core/types.js';
  */
 export const addToQueue = async (params: RaidParams): Promise<void> => {
   const queueRef = getDb().collection('raidQueue').doc(params.twitchUserId);
+  const userRef = getDb().collection('users').doc(params.twitchUserId);
 
   await getDb().runTransaction(async (transaction) => {
-    const existing = await transaction.get(queueRef);
+    const [existing, userDoc] = await Promise.all([
+      transaction.get(queueRef),
+      transaction.get(userRef),
+    ]);
+    const userCreatedAt = userDoc.data()?.['createdAt'];
 
     const profileFields = {
       twitchUserId: params.twitchUserId,
@@ -27,6 +32,7 @@ export const addToQueue = async (params: RaidParams): Promise<void> => {
       pogoUsername: params.pogoUsername,
       isSubscriber: params.isSubscriber,
       isVip: params.isVip,
+      ...(userCreatedAt ? { createdAt: userCreatedAt } : {}),
     };
 
     if (!existing.exists) {
