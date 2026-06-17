@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { UiSettingsService } from './ui-settings.service';
@@ -24,7 +24,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   private readonly uiSettings = inject(UiSettingsService);
   private strictModeSub: Subscription | null = null;
   protected settings: Settings = { ...DEFAULT };
-  protected strictMode = false;
+  protected readonly strictMode = signal(false);
   protected open = false;
 
   readonly fontScaleOptions = [
@@ -41,7 +41,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     } catch { /* ignore */ }
     this.apply();
     this.strictModeSub = this.uiSettings.strictMode$.subscribe((enabled) => {
-      this.strictMode = enabled;
+      this.strictMode.set(enabled);
     });
   }
 
@@ -69,12 +69,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   protected async toggleStrictMode(): Promise<void> {
-    const next = !this.strictMode;
-    this.strictMode = next;
+    const next = !this.strictMode();
+    this.strictMode.set(next);
     try {
       await this.uiSettings.setStrictMode(next);
     } catch {
-      this.strictMode = !next;
+      this.strictMode.set(!next);
     }
   }
 

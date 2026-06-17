@@ -23,8 +23,9 @@ export const handleStrictCommand = async (event: ChatMessageEvent): Promise<void
   setStrictMode(enable);
   try {
     await setUiStrictMode(enable);
-  } catch {
+  } catch (error) {
     // Keep local bot behavior correct even if Firestore write fails.
+    console.error('Failed to sync strict mode to settings/ui:', error);
   }
   await sendChatMessage(`@${event.chatter_user_login} Strict mode is now ${enable ? 'on' : 'off'}.`);
 };

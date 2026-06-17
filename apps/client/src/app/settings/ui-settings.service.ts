@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, NgZone, OnDestroy, inject } from '@angular/core';
 import { getFirestore, doc, onSnapshot, setDoc, type Unsubscribe } from 'firebase/firestore';
 import { BehaviorSubject, Subject } from 'rxjs';
 
@@ -13,6 +13,7 @@ import { BehaviorSubject, Subject } from 'rxjs';
  */
 @Injectable({ providedIn: 'root' })
 export class UiSettingsService implements OnDestroy {
+  private readonly ngZone = inject(NgZone);
   private unsubscribe: Unsubscribe | null = null;
   private lastRegirice: number | null = null;
 
@@ -26,7 +27,9 @@ export class UiSettingsService implements OnDestroy {
       const strictMode = snapshot.data()?.['strictMode'];
 
       if (typeof strictMode === 'boolean') {
-        this.strictMode$.next(strictMode);
+        this.ngZone.run(() => {
+          this.strictMode$.next(strictMode);
+        });
       }
 
       if (this.lastRegirice === null) {
@@ -37,7 +40,9 @@ export class UiSettingsService implements OnDestroy {
 
       if (count !== null && count !== this.lastRegirice) {
         this.lastRegirice = count;
-        this.regirice$.next();
+        this.ngZone.run(() => {
+          this.regirice$.next();
+        });
       }
     });
   }

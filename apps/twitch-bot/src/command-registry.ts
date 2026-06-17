@@ -124,6 +124,12 @@ export const COMMAND_REGISTRY: CommandMeta[] = [
     description: 'Enables or disables strict mode (duplicate !raid triggers strikes/timeout)',
   },
   {
+    command: 'shutdown',
+    usage: '!shutdown',
+    permission: 'mods',
+    description: 'Shuts down the bot process',
+  },
+  {
     command: 'discord',
     usage: '!discord',
     permission: 'everyone',

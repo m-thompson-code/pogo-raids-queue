@@ -39,10 +39,10 @@
         <span class="setting__label">Strict mode</span>
         <button
           class="mode-btn"
-          [class.mode-btn--strict-on]="strictMode"
-          [class.mode-btn--strict-off]="!strictMode"
+          [class.mode-btn--strict-on]="strictMode()"
+          [class.mode-btn--strict-off]="!strictMode()"
           (click)="toggleStrictMode()">
-          {{ strictMode ? 'On' : 'Off' }}
+          {{ strictMode() ? 'On' : 'Off' }}
         </button>
       </div>
     </div>

@@ -17,6 +17,16 @@ describe('COMMAND_REGISTRY', () => {
     }
   });
 
+  it('has metadata for every canonical command', () => {
+    const registryCommands = new Set(COMMAND_REGISTRY.map((m) => m.command));
+    for (const canonical of CANONICAL_COMMANDS) {
+      expect(
+        registryCommands.has(canonical),
+        `"${canonical}" is missing from COMMAND_REGISTRY`
+      ).toBe(true);
+    }
+  });
+
   it('every entry has a non-empty usage, description, and valid permission', () => {
     for (const meta of COMMAND_REGISTRY) {
       expect(meta.usage.length, `${meta.command} usage is empty`).toBeGreaterThan(0);
