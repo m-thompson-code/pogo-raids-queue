@@ -197,10 +197,22 @@ describe('requesting + code → hintStreamerWontAdd', () => {
     expect(detectHint(makeEvent('my code is 123412341234'))).toBe(messages.hintStreamerWontAdd);
   });
 
+  it('returns hintStreamerWontAdd for "my trainer code is" phrase', () => {
+    expect(detectHint(makeEvent('my trainer code is 8440 1577 6953'))).toBe(messages.hintStreamerWontAdd);
+  });
+
   it('returns null when code is the broadcaster own code', () => {
     // This is a weird edge case where code is broadcaster's own code, but we don't want to trigger
     // the hint since it's already known. It's simpler to just not trigger on it at all.
     expect(detectHint(makeEvent('add me 835766986460'))).toBeNull();
+  });
+});
+
+describe('first-time viewer with trainer code phrasing', () => {
+  it('sends hintStreamerWontAdd for "my trainer code is 8440 1577 6953"', async () => {
+    vi.mocked(getUser).mockResolvedValue(null);
+    await runDetectables(makeEvent('my trainer code is 8440 1577 6953'));
+    expect(sendChatMessage).toHaveBeenCalledWith(messages.hintStreamerWontAdd);
   });
 });
 

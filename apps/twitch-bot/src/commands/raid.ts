@@ -1,13 +1,24 @@
 import { sendChatMessage } from '../api/chat.js';
 import { messages } from '../messages.js';
 import { isQueueOpen } from '../queue-state.js';
-import { markRaidSuccess, isFirstTimeChatter, markInQueue, isInQueue, isFirestoreListenerActive, getQueueEntryStatus, setQueueEntryStatus } from '../detectables/shared.js';
-import { getUser } from '@pogo-raid-system/firebase';
+import { markRaidSuccess, isFirstTimeChatter, markInQueue, isInQueue, isFirestoreListenerActive, getQueueEntryStatus, setQueueEntryStatus, unmarkRaidSuccess, markFirstTimeChatter, unmarkInQueueByTwitchId } from '../detectables/shared.js';
+import { getUser, strikeUser } from '@pogo-raid-system/firebase';
 import { queue } from '../providers/queue.js';
 import type { ChatMessageEvent } from '../types.js';
 
 /** In-memory cache of twitchUserId → pogoUsername to avoid repeat DB reads. */
 const pogoUsernameCache = new Map<string, string>();
+const RAID_TIMEOUT_MS = 10 * 60 * 1000;
+const RAID_REPEAT_WINDOW_MS = 2 * 60 * 1000;
+const lastRaidCommandAt = new Map<string, number>();
+/** Users who have been moved to timedOutQueue this session. Prevents the
+ * 5-minute repeat window from masking the timeout-remaining message. */
+const timedOutUsers = new Set<string>();
+
+export const __resetRaidRepeatWindowForTests = (): void => {
+  lastRaidCommandAt.clear();
+  timedOutUsers.clear();
+};
 
 /**
  * Handles the `!raid` chat command.
@@ -40,6 +51,19 @@ export const handleRaidCommand = async (
     return;
   }
 
+  const now = Date.now();
+  const previousRaidAt = lastRaidCommandAt.get(event.chatter_user_id);
+  const repeatedWithinWindow =
+    isInQueue(event.chatter_user_id) &&
+    !timedOutUsers.has(event.chatter_user_id) &&
+    previousRaidAt !== undefined &&
+    now - previousRaidAt < RAID_REPEAT_WINDOW_MS;
+  lastRaidCommandAt.set(event.chatter_user_id, now);
+  if (repeatedWithinWindow) {
+    await sendChatMessage(messages.raidAlreadyInQueue);
+    return;
+  }
+
   const cachedUsername = pogoUsernameCache.get(event.chatter_user_id);
   const getStoredPogoUsername = async (): Promise<string | undefined> => {
     if (cachedUsername) return cachedUsername;
@@ -50,16 +74,72 @@ export const handleRaidCommand = async (
   const isSamePogoUsername = (left: string, right: string): boolean =>
     left.toLowerCase() === right.toLowerCase();
 
-  const upsertAndAddToQueue = async (resolvedPogoUsername: string): Promise<void> => {
-    const raidParams = {
-      twitchUserId: event.chatter_user_id,
-      twitchUsername: event.chatter_user_login,
-      pogoUsername: resolvedPogoUsername,
-      isSubscriber: event.badges.some(
-        (b) => b.set_id === 'subscriber' || b.set_id === 'premium' || b.set_id === 'founder'
-      ),
-      isVip: event.badges.some((b) => b.set_id === 'vip'),
-    };
+  const raidTimeoutRemainingMs = (timedOutAt: unknown): number => {
+    if (!timedOutAt) return 0;
+    let timedOutMs: number | null = null;
+    if (typeof timedOutAt === 'object' && timedOutAt !== null && 'toDate' in timedOutAt) {
+      timedOutMs = (timedOutAt as { toDate: () => Date }).toDate().getTime();
+    } else if (timedOutAt instanceof Date) {
+      timedOutMs = timedOutAt.getTime();
+    }
+    if (timedOutMs === null) return 0;
+    const remaining = RAID_TIMEOUT_MS - (Date.now() - timedOutMs);
+    return remaining > 0 ? remaining : 0;
+  };
+
+  const buildRaidParams = (resolvedPogoUsername: string) => ({
+    twitchUserId: event.chatter_user_id,
+    twitchUsername: event.chatter_user_login,
+    pogoUsername: resolvedPogoUsername,
+    isSubscriber: event.badges.some(
+      (b) => b.set_id === 'subscriber' || b.set_id === 'founder'
+    ),
+    isVip: event.badges.some((b) => b.set_id === 'vip'),
+  });
+
+  const strikeForForgotJoined = async (resolvedPogoUsername: string): Promise<void> => {
+    const strikeCount = await strikeUser(
+      event.chatter_user_login,
+      event.chatter_user_id
+    );
+    unmarkRaidSuccess(event.chatter_user_id);
+    markFirstTimeChatter(event.chatter_user_id);
+
+    if (strikeCount >= 3) {
+      const raidParams = buildRaidParams(resolvedPogoUsername);
+      timedOutUsers.add(event.chatter_user_id);
+      try {
+        await Promise.all([
+          queue.removeByTwitchId(event.chatter_user_id),
+          queue.addToTimedOutQueue(raidParams),
+        ]);
+      } finally {
+        if (!isFirestoreListenerActive()) {
+          unmarkInQueueByTwitchId(event.chatter_user_id);
+        }
+      }
+    }
+
+    await sendChatMessage(messages.raidForgotJoinedStrike(strikeCount));
+  };
+
+  const upsertAndAddToQueue = async (resolvedPogoUsername: string): Promise<'queued' | 'timedOut'> => {
+    const raidParams = buildRaidParams(resolvedPogoUsername);
+    const user = await getUser(event.chatter_user_id);
+    const remainingMs = raidTimeoutRemainingMs(user?.timedOutAt);
+
+    if (remainingMs > 0) {
+      timedOutUsers.add(event.chatter_user_id);
+      await Promise.all([
+        queue.removeByTwitchId(event.chatter_user_id),
+        queue.addToTimedOutQueue(raidParams),
+      ]);
+      if (!isFirestoreListenerActive()) {
+        unmarkInQueueByTwitchId(event.chatter_user_id);
+      }
+      await sendChatMessage(messages.raidTimedOut(resolvedPogoUsername, remainingMs));
+      return 'timedOut';
+    }
 
     try {
       await Promise.all([queue.upsertUser(raidParams), queue.addToQueue(raidParams)]);
@@ -67,10 +147,13 @@ export const handleRaidCommand = async (
     } catch {
       markInQueue(event.chatter_user_id, resolvedPogoUsername);
     }
+
+    return 'queued';
   };
 
   if (!pogoUsername) {
-    if (isInQueue(event.chatter_user_id)) {
+    if (isInQueue(event.chatter_user_id) && !timedOutUsers.has(event.chatter_user_id)) {
+      const pogo = (await getStoredPogoUsername()) ?? event.chatter_user_login;
       if (getQueueEntryStatus(event.chatter_user_id) === 'invited') {
         try {
           await queue.setEntryStatus(event.chatter_user_id, 'joined');
@@ -78,16 +161,16 @@ export const handleRaidCommand = async (
         } catch {
           setQueueEntryStatus(event.chatter_user_id, 'joined');
         }
-        const pogo = pogoUsernameCache.get(event.chatter_user_id) ?? event.chatter_user_login;
         await sendChatMessage(messages.raidRejoinedQueue(pogo));
       } else {
-        await sendChatMessage(messages.raidAlreadyInQueue);
+        await strikeForForgotJoined(pogo);
       }
       return;
     }
     const resolvedUsername = await getStoredPogoUsername();
     if (resolvedUsername) {
-      await upsertAndAddToQueue(resolvedUsername);
+      const queueResult = await upsertAndAddToQueue(resolvedUsername);
+      if (queueResult === 'timedOut') return;
       pogoUsernameCache.set(event.chatter_user_id, resolvedUsername);
       markRaidSuccess(event.chatter_user_id);
       await sendChatMessage(messages.raidAdded(resolvedUsername));
@@ -102,7 +185,7 @@ export const handleRaidCommand = async (
     return;
   }
 
-  if (isInQueue(event.chatter_user_id)) {
+  if (isInQueue(event.chatter_user_id) && !timedOutUsers.has(event.chatter_user_id)) {
     const previousPogoUsername = await getStoredPogoUsername();
     const sameUsername = previousPogoUsername ? isSamePogoUsername(previousPogoUsername, pogoUsername) : false;
 
@@ -123,11 +206,12 @@ export const handleRaidCommand = async (
       await sendChatMessage(messages.raidUsernameUpdated(pogoUsername, previousPogoUsername));
     } else {
       if (sameUsername) {
-        await sendChatMessage(messages.raidAlreadyInQueue);
+          await strikeForForgotJoined(previousPogoUsername ?? pogoUsername);
         return;
       }
 
-      await upsertAndAddToQueue(pogoUsername);
+      const queueResult = await upsertAndAddToQueue(pogoUsername);
+      if (queueResult === 'timedOut') return;
       pogoUsernameCache.set(event.chatter_user_id, pogoUsername);
       await sendChatMessage(messages.raidUsernameUpdated(pogoUsername, previousPogoUsername));
     }
@@ -135,14 +219,23 @@ export const handleRaidCommand = async (
   }
 
   const raidParams = {
-    twitchUserId: event.chatter_user_id,
-    twitchUsername: event.chatter_user_login,
-    pogoUsername,
-    isSubscriber: event.badges.some(
-      (b) => b.set_id === 'subscriber' || b.set_id === 'premium' || b.set_id === 'founder'
-    ),
-    isVip: event.badges.some((b) => b.set_id === 'vip'),
+    ...buildRaidParams(pogoUsername),
   };
+
+  const user = await getUser(event.chatter_user_id);
+  const remainingMsFresh = raidTimeoutRemainingMs(user?.timedOutAt);
+  if (remainingMsFresh > 0) {
+    timedOutUsers.add(event.chatter_user_id);
+    await Promise.all([
+      queue.removeByTwitchId(event.chatter_user_id),
+      queue.addToTimedOutQueue(raidParams),
+    ]);
+    if (!isFirestoreListenerActive()) {
+      unmarkInQueueByTwitchId(event.chatter_user_id);
+    }
+    await sendChatMessage(messages.raidTimedOut(pogoUsername, remainingMsFresh));
+    return;
+  }
 
   const isNewlyCached = !cachedUsername;
   const firstTime = isFirstTimeChatter(event);

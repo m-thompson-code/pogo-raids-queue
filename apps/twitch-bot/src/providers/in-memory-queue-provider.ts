@@ -42,6 +42,12 @@ export class InMemoryQueueProvider implements QueueProvider {
     }
   }
 
+  async addToTimedOutQueue(params: RaidParams): Promise<void> {
+    // In-memory mode has no dedicated timed-out queue collection.
+    // Keep behavior deterministic by not enqueueing timed-out users.
+    void params;
+  }
+
   async clearQueue(): Promise<void> {
     this.queue.clear();
   }

@@ -1,5 +1,6 @@
 <section class="queue">
   @let queue = queue$ | async;
+  @let timedOutQueue = timedOutQueue$ | async;
   @if (queue !== null) {
     @if (notesVisible()) {
       <textarea class="queue__notes" rows="3"
@@ -64,6 +65,25 @@
           </ul>
         </div>
       }
+    }
+
+    @if (timedOutQueue !== null && timedOutQueue.length > 0) {
+      <div class="timed-out">
+        <h3 class="timed-out__label">Timed Out Queue</h3>
+        <p class="timed-out__hint">Click a user to clear timeout and move them to the main queue.</p>
+        <ul class="timed-out__pills">
+          @for (entry of timedOutQueue; track entry.twitchUserId) {
+            <li
+              class="pill pill--timed-out"
+              [attr.data-twitch]="entry.twitchUsername || 'Manual entry'"
+              tabindex="0"
+              (click)="releaseTimedOutEntry(entry)"
+              (keydown.enter)="releaseTimedOutEntry(entry)">
+              {{ entry.pogoUsername }}
+            </li>
+          }
+        </ul>
+      </div>
     }
   }
 </section>

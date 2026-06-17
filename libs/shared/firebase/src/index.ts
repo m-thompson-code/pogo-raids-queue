@@ -3,6 +3,7 @@ export { getUser, upsertUser, strikeUser } from './lib/collections/users.js';
 export { triggerRegirice } from './lib/collections/settings.js';
 export {
   addToQueue,
+  addToTimedOutQueue,
   clearQueue,
   getQueue,
   addManualToQueue,

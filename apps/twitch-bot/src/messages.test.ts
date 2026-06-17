@@ -22,6 +22,15 @@ describe('messages', () => {
       expect(msg).toContain('OldName');
       expect(msg).toContain('NewName');
     });
+    it('raidForgotJoinedStrike warns about timeout before threshold', () => {
+      const msg = messages.raidForgotJoinedStrike(2);
+      expect(msg).toContain('3 strikes');
+      expect(msg).toContain('10 minutes');
+    });
+    it('raidForgotJoinedStrike states active timeout at threshold', () => {
+      const msg = messages.raidForgotJoinedStrike(3);
+      expect(msg).toContain('timed out for 10 minutes');
+    });
   });
 
   describe('leave', () => {
@@ -110,6 +119,9 @@ describe('messages', () => {
     });
     it('hintUseRaidCommand mentions !raid', () => {
       expect(messages.hintUseRaidCommand).toContain('!raid');
+    });
+    it('intervalReminder mentions !joined', () => {
+      expect(messages.intervalReminder).toContain('!joined');
     });
   });
 

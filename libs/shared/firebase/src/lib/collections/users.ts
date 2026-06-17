@@ -73,14 +73,22 @@ export const strikeUser = async (
   value?: number,
 ): Promise<number> => {
   const docRef = getDb().collection('users').doc(twitchUserId);
-  await docRef.set(
-    {
+  return getDb().runTransaction(async (transaction) => {
+    const existing = await transaction.get(docRef);
+    const currentStrikes = (existing.data()?.['strikes'] as number | undefined) ?? 0;
+    const nextStrikes = value !== undefined ? value : currentStrikes + 1;
+
+    const update: Record<string, unknown> = {
       twitchUserId,
       twitchUsername: twitchUsername.replace(/^@/, '').toLowerCase(),
-      strikes: value !== undefined ? value : FieldValue.increment(1),
-    },
-    { merge: true },
-  );
-  const updated = await docRef.get();
-  return (updated.data()?.['strikes'] as number) ?? 0;
+      strikes: nextStrikes,
+    };
+
+    if (nextStrikes >= 3) {
+      update['timedOutAt'] = FieldValue.serverTimestamp();
+    }
+
+    transaction.set(docRef, update, { merge: true });
+    return nextStrikes;
+  });
 };

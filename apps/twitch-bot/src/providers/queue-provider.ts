@@ -36,6 +36,12 @@ export interface QueueProvider {
    */
   addToQueue(params: RaidParams): Promise<void>;
 
+  /**
+   * Adds the user to the timed-out queue if they are in a temporary timeout window.
+   * Uses the same schema as `raidQueue`.
+   */
+  addToTimedOutQueue(params: RaidParams): Promise<void>;
+
   /** Removes all entries from the queue. */
   clearQueue(): Promise<void>;
 

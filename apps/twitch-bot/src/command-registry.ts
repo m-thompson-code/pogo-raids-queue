@@ -37,7 +37,7 @@ export const COMMAND_REGISTRY: CommandMeta[] = [
     command: 'invited',
     usage: '!invited',
     permission: 'everyone',
-    description: 'Marks yourself as invited (also: !thank, !ty)',
+    description: 'Marks yourself as invited (also: !joined, !thank, !ty)',
   },
   {
     command: 'list',

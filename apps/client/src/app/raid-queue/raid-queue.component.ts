@@ -12,6 +12,7 @@ import { IsTodayPipe } from './is-today.pipe';
 export class RaidQueueComponent {
   private readonly raidQueueService = inject(RaidQueueService);
   protected readonly queue$ = this.raidQueueService.getQueue();
+  protected readonly timedOutQueue$ = this.raidQueueService.getTimedOutQueue();
 
   protected readonly snackbar = signal<string | null>(null);
   protected readonly addInput = signal('');
@@ -120,5 +121,10 @@ export class RaidQueueComponent {
     this.addInput.set('');
     const listed = usernames.join(', ');
     this.showSnackbar(`${listed} added to queue`);
+  }
+
+  protected async releaseTimedOutEntry(entry: QueueEntry): Promise<void> {
+    await this.raidQueueService.releaseTimedOutEntry(entry);
+    this.showSnackbar(`${entry.pogoUsername} moved back to queue`);
   }
 }

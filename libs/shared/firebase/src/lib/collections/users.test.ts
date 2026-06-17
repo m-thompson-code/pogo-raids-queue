@@ -4,7 +4,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockSet = vi.fn();
 const mockUpdate = vi.fn();
-const mockGet = vi.fn();
 const mockTransactionGet = vi.fn();
 
 const mockTransaction = {
@@ -13,10 +12,7 @@ const mockTransaction = {
   update: mockUpdate,
 };
 
-const mockDocRef = {
-  set: mockSet,
-  get: mockGet,
-};
+const mockDocRef = {};
 
 const mockDoc = vi.fn(() => mockDocRef);
 const mockCollection = vi.fn(() => ({ doc: mockDoc }));
@@ -132,44 +128,58 @@ describe('upsertUser', () => {
 describe('strikeUser', () => {
   beforeEach(() => {
     mockSet.mockReset();
-    mockGet.mockReset();
+    mockTransactionGet.mockReset();
+    mockRunTransaction.mockImplementation(
+      (fn: (t: typeof mockTransaction) => Promise<void>) => fn(mockTransaction),
+    );
   });
 
   it('increments strikes by 1 when no value is provided', async () => {
-    mockGet.mockResolvedValue({ data: () => ({ strikes: 3 }) });
+    mockTransactionGet.mockResolvedValue({ data: () => ({ strikes: 3 }) });
 
     const result = await strikeUser('moomoomamoo', 'user-123');
 
     expect(mockSet).toHaveBeenCalledOnce();
-    const [data] = mockSet.mock.calls[0];
-    expect(data.strikes).toBe(SENTINEL_INCREMENT);
-    expect(result).toBe(3);
+    const [docRef, data] = mockSet.mock.calls[0];
+    expect(docRef).toBe(mockDocRef);
+    expect(data.strikes).toBe(4);
+    expect(result).toBe(4);
   });
 
   it('sets strikes to an explicit value when one is provided', async () => {
-    mockGet.mockResolvedValue({ data: () => ({ strikes: 5 }) });
+    mockTransactionGet.mockResolvedValue({ data: () => ({ strikes: 5 }) });
 
     const result = await strikeUser('moomoomamoo', 'user-123', 5);
 
-    const [data] = mockSet.mock.calls[0];
+    const [, data] = mockSet.mock.calls[0];
     expect(data.strikes).toBe(5);
     expect(result).toBe(5);
   });
 
   it('strips leading @ from twitchUsername and lowercases it', async () => {
-    mockGet.mockResolvedValue({ data: () => ({ strikes: 1 }) });
+    mockTransactionGet.mockResolvedValue({ data: () => ({ strikes: 1 }) });
 
     await strikeUser('@MooMooMamoo', 'user-123');
 
-    const [data] = mockSet.mock.calls[0];
+    const [, data] = mockSet.mock.calls[0];
     expect(data.twitchUsername).toBe('moomoomamoo');
   });
 
-  it('returns 0 when strikes field is missing from the document', async () => {
-    mockGet.mockResolvedValue({ data: () => ({}) });
+  it('defaults to 1 when strikes field is missing from the document', async () => {
+    mockTransactionGet.mockResolvedValue({ data: () => ({}) });
 
     const result = await strikeUser('moomoomamoo', 'user-123');
 
-    expect(result).toBe(0);
+    expect(result).toBe(1);
+  });
+
+  it('sets timedOutAt when strikes reach 3', async () => {
+    mockTransactionGet.mockResolvedValue({ data: () => ({ strikes: 2 }) });
+
+    const result = await strikeUser('moomoomamoo', 'user-123');
+
+    const [, data] = mockSet.mock.calls[0];
+    expect(result).toBe(3);
+    expect(data.timedOutAt).toBe(SENTINEL_TIMESTAMP);
   });
 });

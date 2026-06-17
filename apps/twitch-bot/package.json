@@ -13,6 +13,9 @@
       },
       "build": {
         "executor": "@nx/esbuild:esbuild",
+        "dependsOn": [
+          "^build"
+        ],
         "outputs": [
           "{options.outputPath}"
         ],
@@ -88,7 +91,7 @@
         ],
         "options": {
           "buildTarget": "@pogo-raid-system/twitch-bot:build",
-          "runBuildTargetDependencies": false
+          "runBuildTargetDependencies": true
         },
         "configurations": {
           "development": {

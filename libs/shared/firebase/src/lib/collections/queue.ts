@@ -24,7 +24,47 @@ export const addToQueue = async (params: RaidParams): Promise<void> => {
       transaction.get(queueRef),
       transaction.get(userRef),
     ]);
-    const userCreatedAt = userDoc.data()?.['createdAt'];
+    const userCreatedAt = typeof userDoc.data === 'function'
+      ? userDoc.data()?.['createdAt']
+      : undefined;
+
+    const profileFields = {
+      twitchUserId: params.twitchUserId,
+      twitchUsername: params.twitchUsername,
+      pogoUsername: params.pogoUsername,
+      isSubscriber: params.isSubscriber,
+      isVip: params.isVip,
+      ...(userCreatedAt ? { createdAt: userCreatedAt } : {}),
+    };
+
+    if (!existing.exists) {
+      transaction.set(queueRef, {
+        ...profileFields,
+        status: 'joined',
+        joinedAt: FieldValue.serverTimestamp(),
+      });
+    } else {
+      transaction.update(queueRef, profileFields);
+    }
+  });
+};
+
+/**
+ * Adds or updates the user's entry in the `timedOutQueue` collection.
+ * Uses the same schema as `raidQueue`.
+ */
+export const addToTimedOutQueue = async (params: RaidParams): Promise<void> => {
+  const queueRef = getDb().collection('timedOutQueue').doc(params.twitchUserId);
+  const userRef = getDb().collection('users').doc(params.twitchUserId);
+
+  await getDb().runTransaction(async (transaction) => {
+    const [existing, userDoc] = await Promise.all([
+      transaction.get(queueRef),
+      transaction.get(userRef),
+    ]);
+    const userCreatedAt = typeof userDoc.data === 'function'
+      ? userDoc.data()?.['createdAt']
+      : undefined;
 
     const profileFields = {
       twitchUserId: params.twitchUserId,

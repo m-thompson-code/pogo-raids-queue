@@ -11,6 +11,10 @@ vi.mock('../messages.js', () => ({
 }));
 vi.mock('@pogo-raid-system/firebase', () => ({ strikeUser: vi.fn() }));
 vi.mock('../api/twitch-api.js', () => ({ getTwitchUserId: vi.fn() }));
+vi.mock('../detectables/shared.js', () => ({
+  unmarkRaidSuccess: vi.fn(),
+  markFirstTimeChatter: vi.fn(),
+}));
 
 import { sendChatMessage } from '../api/chat.js';
 import { strikeUser } from '@pogo-raid-system/firebase';

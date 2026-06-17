@@ -18,6 +18,21 @@ export const messages = {
   raidAdded: (pogoUsername: string) =>
     `${pogoUsername} added to the raid queue!`,
   raidAlreadyInQueue: `You're already in the queue.`,
+  raidForgotJoinedStrike: (count: number) =>
+    count >= 3
+      ? `You forgot to use !joined after your raid. You now have ${count} strikes and are timed out for 10 minutes.`
+      : `You forgot to use !joined after your raid. You now have ${count} strike${count === 1 ? '' : 's'}. At 3 strikes, you will be timed out for 10 minutes.`,
+  raidTimedOut: (pogoUsername: string, remainingMs: number) => {
+    const totalSec = Math.ceil(remainingMs / 1000);
+    const min = Math.floor(totalSec / 60);
+    const sec = totalSec % 60;
+    const timeStr = min > 0 && sec > 0
+      ? `${min} min ${sec} sec`
+      : min > 0
+        ? `${min} min`
+        : `${sec} sec`;
+    return `${pogoUsername} is temporarily timed out. Try again in ${timeStr}.`;
+  },
   raidRejoinedQueue: (pogoUsername: string) =>
     `${pogoUsername} is back in the queue!`,
   raidUsernameUpdated: (newPogoUsername: string, previousPogoUsername?: string) =>
@@ -89,7 +104,7 @@ export const messages = {
 
   // periodic interval reminder
   intervalReminder:
-    `Please use !ty to show us you made it to the raid and to show your appreciation! Use !commands for a list of all commands`,
+    `Use !joined when you enter a raid. If you forget, you will be timed out for the next raid. Use !commands for a list of all commands`,
   intervalPromo:
     `Post your wins in discord https://discord.gg/AARRcwjChD and drop a follow on TikTok https://www.tiktok.com/@poketrainerhydro`,
 

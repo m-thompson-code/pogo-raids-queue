@@ -28,6 +28,10 @@ export interface RaidUser {
   lastRaided: Timestamp;
   /** Total number of times this user has issued the !raid command */
   raidCount: number;
+  /** Current strike count for queue discipline */
+  strikes?: number;
+  /** Timestamp for temporary timeout from the next raid queue */
+  timedOutAt?: Timestamp;
 }
 
 /**

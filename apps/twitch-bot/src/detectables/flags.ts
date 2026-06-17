@@ -28,7 +28,7 @@ export const REQUESTING_PATTERNS = [
   /\badded\s+to\b/,
   /\bsign\s+(me|my)\s+up\b/,
   /\bjoin\s+(the\s+)?(raid|queue)\b/,
-  /\bmy\s+code\s+is\b/,
+  /\bmy\s+(trainer\s+)?code\s+is\b/,
 ];
 
 const USERNAME_FOR_POKEMON_PATTERN = /(?:^|\s)([a-z0-9_]{3,})\s+for\s+(the\s+)?\S{3,}(\s+(plz|pls|please))?(?=$|\s)/;

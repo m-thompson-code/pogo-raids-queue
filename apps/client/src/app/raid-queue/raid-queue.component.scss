@@ -24,6 +24,8 @@
   --btn-accent-hover-color: #a7f3d0;
   --pill-invited-bg: #1a3d2e;
   --pill-invited-color: #6ee7b7;
+  --pill-timed-out-bg: #4a1717;
+  --pill-timed-out-color: #ffb4b4;
   --label-color: #888;
 }
 
@@ -51,6 +53,8 @@
   --btn-accent-hover-color: #064e3b;
   --pill-invited-bg: #d1fae5;
   --pill-invited-color: #065f46;
+  --pill-timed-out-bg: #ffe2e2;
+  --pill-timed-out-color: #9f1d1d;
   --label-color: #333;
 }
 
@@ -232,6 +236,37 @@
   }
 }
 
+.timed-out {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+
+  &__label {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--pill-timed-out-color);
+  }
+
+  &__hint {
+    margin: 0;
+    color: var(--label-color);
+    font-size: 0.9rem;
+  }
+
+  &__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+}
+
 // ── Pills ──────────────────────────────────────────────────────────────────
 
 .pill {
@@ -257,6 +292,17 @@
   &--copied {
     background: #9147ff;
     color: #fff;
+  }
+
+  &--timed-out {
+    background: var(--pill-timed-out-bg);
+    color: var(--pill-timed-out-color);
+
+    &:hover,
+    &:active {
+      background: #b42323;
+      color: #fff;
+    }
   }
 
   &:hover,

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handleRaidCommand } from './raid.js';
+import { handleRaidCommand, __resetRaidRepeatWindowForTests } from './raid.js';
 
 vi.mock('../api/chat.js', () => ({ sendChatMessage: vi.fn() }));
 vi.mock('../messages.js', () => ({
@@ -11,6 +11,9 @@ vi.mock('../messages.js', () => ({
     raidAddedUsernameSaved: (p: string) => `raidAddedUsernameSaved:${p}`,
     raidAddedFirstTime: (p: string) => `raidAddedFirstTime:${p}`,
     raidAlreadyInQueue: 'raidAlreadyInQueue',
+    raidForgotJoinedStrike: (count: number) => `raidForgotJoinedStrike:${count}`,
+    raidTimedOut: (p: string, ms: number) => `raidTimedOut:${p}:${ms}`,
+
     raidRejoinedQueue: (p: string) => `raidRejoinedQueue:${p}`,
     raidUsernameUpdated: (next: string, prev?: string) => `raidUsernameUpdated:${prev ?? ''}->${next}`,
   },
@@ -18,18 +21,23 @@ vi.mock('../messages.js', () => ({
 vi.mock('../queue-state.js', () => ({ isQueueOpen: vi.fn() }));
 vi.mock('../detectables/shared.js', () => ({
   markRaidSuccess: vi.fn(),
+  unmarkRaidSuccess: vi.fn(),
   markInQueue: vi.fn(),
+  unmarkInQueueByTwitchId: vi.fn(),
   isInQueue: vi.fn().mockReturnValue(false),
   isFirstTimeChatter: vi.fn().mockReturnValue(false),
+  markFirstTimeChatter: vi.fn(),
   isFirestoreListenerActive: vi.fn().mockReturnValue(false),
   getQueueEntryStatus: vi.fn().mockReturnValue(undefined),
   setQueueEntryStatus: vi.fn(),
 }));
-vi.mock('@pogo-raid-system/firebase', () => ({ getUser: vi.fn() }));
+vi.mock('@pogo-raid-system/firebase', () => ({ getUser: vi.fn(), strikeUser: vi.fn() }));
 vi.mock('../providers/queue.js', () => ({
   queue: {
     upsertUser: vi.fn().mockResolvedValue(undefined),
     addToQueue: vi.fn().mockResolvedValue(undefined),
+    addToTimedOutQueue: vi.fn().mockResolvedValue(undefined),
+    removeByTwitchId: vi.fn().mockResolvedValue('TrainerAsh'),
     setEntryStatus: vi.fn().mockResolvedValue(undefined),
   },
 }));
@@ -37,7 +45,7 @@ vi.mock('../providers/queue.js', () => ({
 import { sendChatMessage } from '../api/chat.js';
 import { isQueueOpen } from '../queue-state.js';
 import { markRaidSuccess, markInQueue, isInQueue, isFirestoreListenerActive, getQueueEntryStatus, setQueueEntryStatus } from '../detectables/shared.js';
-import { getUser } from '@pogo-raid-system/firebase';
+import { getUser, strikeUser } from '@pogo-raid-system/firebase';
 import { queue } from '../providers/queue.js';
 
 const makeEvent = (
@@ -51,7 +59,12 @@ const makeEvent = (
   badges,
 });
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  __resetRaidRepeatWindowForTests();
+});
+
+const makeTimestamp = (iso: string) => ({ toDate: () => new Date(iso) });
 
 describe('handleRaidCommand', () => {
   it('rejects when queue is closed', async () => {
@@ -112,6 +125,16 @@ describe('handleRaidCommand', () => {
     );
   });
 
+  it('does not set isSubscriber for Prime Gaming badge', async () => {
+    vi.mocked(isQueueOpen).mockReturnValue(true);
+    await handleRaidCommand(
+      makeEvent('!raid TrainerAsh', [{ set_id: 'premium' }]) as any
+    );
+    expect(queue.upsertUser).toHaveBeenCalledWith(
+      expect.objectContaining({ isSubscriber: false })
+    );
+  });
+
   it('marks in queue directly when listener is inactive', async () => {
     vi.mocked(isQueueOpen).mockReturnValue(true);
     vi.mocked(isFirestoreListenerActive).mockReturnValue(false);
@@ -155,13 +178,69 @@ describe('handleRaidCommand', () => {
     expect(setQueueEntryStatus).toHaveBeenCalledWith('u1', 'joined');
   });
 
-  it('sends already-in-queue when user raids again with the same username and is already joined', async () => {
+  it('returns already-in-queue message when !raid repeats within 5 minutes', async () => {
+    const nowSpy = vi
+      .spyOn(Date, 'now')
+      .mockReturnValueOnce(1_000_000)
+      .mockReturnValueOnce(1_000_000 + 60_000);
+
+    vi.mocked(isQueueOpen).mockReturnValue(true);
+    vi.mocked(isInQueue)
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true);
+
+    await handleRaidCommand(makeEvent('!raid TrainerAsh') as any);
+    await handleRaidCommand(makeEvent('!raid TrainerAsh') as any);
+
+    expect(sendChatMessage).toHaveBeenLastCalledWith('raidAlreadyInQueue');
+    expect(strikeUser).not.toHaveBeenCalled();
+    nowSpy.mockRestore();
+  });
+
+  it('strikes user and reminds !joined when re-raid uses same username while already joined', async () => {
     vi.mocked(isQueueOpen).mockReturnValue(true);
     vi.mocked(isInQueue).mockReturnValue(true);
     vi.mocked(getQueueEntryStatus).mockReturnValue('joined');
     vi.mocked(getUser).mockResolvedValue({ pogoUsername: 'TrainerAsh' } as any);
+    vi.mocked(strikeUser).mockResolvedValue(2);
     await handleRaidCommand(makeEvent('!raid TrainerAsh') as any);
-    expect(sendChatMessage).toHaveBeenCalledWith('raidAlreadyInQueue');
+    expect(strikeUser).toHaveBeenCalledWith('moo', 'u1');
+    expect(sendChatMessage).toHaveBeenCalledWith('raidForgotJoinedStrike:2');
+    expect(queue.addToTimedOutQueue).not.toHaveBeenCalled();
+  });
+
+  it('strikes user and reminds !joined when running !raid with no args while already joined', async () => {
+    vi.mocked(isQueueOpen).mockReturnValue(true);
+    vi.mocked(isInQueue).mockReturnValue(true);
+    vi.mocked(getQueueEntryStatus).mockReturnValue('joined');
+    vi.mocked(strikeUser).mockResolvedValue(1);
+
+    await handleRaidCommand(makeEvent('!raid') as any);
+
+    expect(strikeUser).toHaveBeenCalledWith('moo', 'u1');
+    expect(sendChatMessage).toHaveBeenCalledWith('raidForgotJoinedStrike:1');
+    expect(queue.addToTimedOutQueue).not.toHaveBeenCalled();
+  });
+
+  it('moves user from raidQueue to timedOutQueue when duplicate !raid reaches 3 strikes', async () => {
+    vi.mocked(isQueueOpen).mockReturnValue(true);
+    vi.mocked(isInQueue).mockReturnValue(true);
+    vi.mocked(getQueueEntryStatus).mockReturnValue('joined');
+    vi.mocked(getUser).mockResolvedValue({ pogoUsername: 'TrainerAsh' } as any);
+    vi.mocked(strikeUser).mockResolvedValue(3);
+    vi.mocked(isFirestoreListenerActive).mockReturnValue(false);
+
+    await handleRaidCommand(makeEvent('!raid TrainerAsh') as any);
+
+    expect(queue.removeByTwitchId).toHaveBeenCalledWith('u1');
+    expect(queue.addToTimedOutQueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        twitchUserId: 'u1',
+        twitchUsername: 'moo',
+        pogoUsername: 'TrainerAsh',
+      })
+    );
+    expect(markInQueue).not.toHaveBeenCalled();
   });
 
   it('updates queued username when user raids with a different username', async () => {
@@ -176,6 +255,83 @@ describe('handleRaidCommand', () => {
     expect(queue.addToQueue).toHaveBeenCalledWith(expect.objectContaining({ pogoUsername: 'NewName' }));
     expect(markInQueue).toHaveBeenCalledWith('u-update', 'NewName');
     expect(sendChatMessage).toHaveBeenCalledWith('raidUsernameUpdated:OldName->NewName');
+  });
+
+  it('routes timed-out users to timedOutQueue instead of raidQueue', async () => {
+    vi.mocked(isQueueOpen).mockReturnValue(true);
+    vi.mocked(isInQueue).mockReturnValue(false);
+    vi.mocked(getUser).mockResolvedValue({
+      timedOutAt: makeTimestamp('2099-01-01T00:00:00.000Z'),
+    } as any);
+
+    await handleRaidCommand(makeEvent('!raid TrainerAsh') as any);
+
+    expect(queue.addToTimedOutQueue).toHaveBeenCalledWith(
+      expect.objectContaining({ twitchUserId: 'u1', pogoUsername: 'TrainerAsh' })
+    );
+    expect(queue.removeByTwitchId).toHaveBeenCalledWith('u1');
+    expect(queue.addToQueue).not.toHaveBeenCalled();
+    expect(sendChatMessage).toHaveBeenCalledWith(expect.stringContaining('raidTimedOut:TrainerAsh'));
+  });
+
+  it('routes users with 3+ strikes and active timedOutAt to timedOutQueue in a single !raid flow', async () => {
+    vi.mocked(isQueueOpen).mockReturnValue(true);
+    vi.mocked(isInQueue).mockReturnValue(false);
+    vi.mocked(getUser).mockResolvedValue({
+      strikes: 3,
+      timedOutAt: makeTimestamp('2099-01-01T00:00:00.000Z'),
+      pogoUsername: 'TrainerAsh',
+    } as any);
+
+    await handleRaidCommand(makeEvent('!raid TrainerAsh') as any);
+
+    expect(queue.addToTimedOutQueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        twitchUserId: 'u1',
+        twitchUsername: 'moo',
+        pogoUsername: 'TrainerAsh',
+      })
+    );
+    expect(queue.removeByTwitchId).toHaveBeenCalledWith('u1');
+    expect(queue.addToQueue).not.toHaveBeenCalled();
+  });
+
+  it('allows normal queue join after timeout window passes', async () => {
+    vi.mocked(isQueueOpen).mockReturnValue(true);
+    vi.mocked(isInQueue).mockReturnValue(false);
+    vi.mocked(getUser).mockResolvedValue({
+      timedOutAt: makeTimestamp('2000-01-01T00:00:00.000Z'),
+    } as any);
+
+    await handleRaidCommand(makeEvent('!raid TrainerAsh') as any);
+
+    expect(queue.addToQueue).toHaveBeenCalledOnce();
+    expect(queue.addToTimedOutQueue).not.toHaveBeenCalled();
+  });
+
+  it('shows timeout-remaining message on repeat !raid even while isInQueue is still true', async () => {
+    // Simulates the race where isInQueue is still true because the Firestore listener
+    // hasn't propagated the removal yet, but the user is already in the timedOutUsers set.
+    vi.mocked(isQueueOpen).mockReturnValue(true);
+    // First call: not in queue → goes to fresh join path → timed out
+    vi.mocked(isInQueue).mockReturnValueOnce(false);
+    vi.mocked(getUser).mockResolvedValue({
+      timedOutAt: makeTimestamp('2099-01-01T00:00:00.000Z'),
+    } as any);
+    await handleRaidCommand(makeEvent('!raid TrainerAsh') as any);
+
+    vi.clearAllMocks();
+
+    // Second call: isInQueue is still true (listener lag), but timedOutUsers has them
+    vi.mocked(isQueueOpen).mockReturnValue(true);
+    vi.mocked(isInQueue).mockReturnValue(true);
+    vi.mocked(getUser).mockResolvedValue({
+      timedOutAt: makeTimestamp('2099-01-01T00:00:00.000Z'),
+    } as any);
+    await handleRaidCommand(makeEvent('!raid TrainerAsh') as any);
+
+    expect(sendChatMessage).not.toHaveBeenCalledWith('raidAlreadyInQueue');
+    expect(sendChatMessage).toHaveBeenCalledWith(expect.stringContaining('raidTimedOut:TrainerAsh'));
   });
 });
 

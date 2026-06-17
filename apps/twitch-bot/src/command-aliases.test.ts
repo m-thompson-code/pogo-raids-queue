@@ -26,6 +26,9 @@ describe('command-aliases', () => {
   it('resolveCommand handles aliases correctly', () => {
     expect(resolveCommand('!r pokename')).toBe('raid');
     expect(resolveCommand('!join pokename')).toBe('raid');
+    expect(resolveCommand('!fc')).toBe('code');
+    expect(resolveCommand('!friendcode')).toBe('code');
+    expect(resolveCommand('!joined')).toBe('invited');
     expect(resolveCommand('!raid pokename')).toBe('raid');
     expect(resolveCommand('!R POKENAME')).toBe('raid');
   });
