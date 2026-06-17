@@ -19,6 +19,7 @@ import { runDetectables } from './detectables/main.js';
 import { handleSpamWindowCommand } from './commands/spam-window.js';
 import { handleEnableCommand, handleDisableCommand } from './commands/enable-disable.js';
 import { handleCommandsCommand } from './commands/commands.js';
+import { handleStrictCommand } from './commands/strict.js';
 import { checkSpam } from './detectables/spam-detection.js';
 import { subscribeToQueue, triggerRegirice } from '@pogo-raid-system/firebase';
 import { isPrivileged } from './permissions.js';
@@ -180,7 +181,7 @@ const ignoredChatUsernames = new Set<string>([
         handleLeaveCommand(chatEvent);
       } else if (command === 'invited') {
         handleInvitedCommand(chatEvent);
-      } else if (command === 'clear' || command === 'open' || command === 'close' || command === 'list' || command === 'groups' || command === 'add' || command === 'remove' || command === 'strike' || command === 'hintcooldown' || command === 'spamwindow') {
+      } else if (command === 'clear' || command === 'open' || command === 'close' || command === 'list' || command === 'groups' || command === 'add' || command === 'remove' || command === 'strike' || command === 'hintcooldown' || command === 'spamwindow' || command === 'strict') {
         if (!isPrivileged(chatEvent)) {
           sendChatMessage(`@${chatEvent.chatter_user_login} you do not have permissions for that command`);
           return;
@@ -205,6 +206,8 @@ const ignoredChatUsernames = new Set<string>([
           handleHintCooldownCommand(chatEvent);
         } else if (command === 'spamwindow') {
           handleSpamWindowCommand(chatEvent);
+        } else if (command === 'strict') {
+          handleStrictCommand(chatEvent);
         }
       } else if (command === 'regirice') {
         const canRegirice = isPrivileged(chatEvent) || chatEvent.badges.some((b) => b.set_id === 'vip');

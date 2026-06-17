@@ -9,6 +9,7 @@ vi.mock('../providers/queue.js', () => ({ queue: { getQueue: vi.fn() } }));
 
 import { sendChatMessage } from '../api/chat.js';
 import { queue } from '../providers/queue.js';
+import type { ChatMessageEvent } from '../types.js';
 
 const makeEntry = (pogoUsername: string) => ({
   pogoUsername,
@@ -31,19 +32,19 @@ beforeEach(() => vi.clearAllMocks());
 describe('handleGroupsCommand', () => {
   it('sends empty message when queue is empty', async () => {
     vi.mocked(queue.getQueue).mockResolvedValue([]);
-    await handleGroupsCommand(makeEvent() as any);
+    await handleGroupsCommand(makeEvent() as unknown as ChatMessageEvent);
     expect(sendChatMessage).toHaveBeenCalledWith('listEmpty');
   });
 
   it('sends a single group when queue has 5 or fewer entries', async () => {
     vi.mocked(queue.getQueue).mockResolvedValue(['A', 'B', 'C'].map(makeEntry));
-    await handleGroupsCommand(makeEvent() as any);
+    await handleGroupsCommand(makeEvent() as unknown as ChatMessageEvent);
     expect(sendChatMessage).toHaveBeenCalledWith('A, B, C');
   });
 
   it('splits into groups of 5 separated by em dash', async () => {
     vi.mocked(queue.getQueue).mockResolvedValue(['A', 'B', 'C', 'D', 'E', 'F', 'G'].map(makeEntry));
-    await handleGroupsCommand(makeEvent() as any);
+    await handleGroupsCommand(makeEvent() as unknown as ChatMessageEvent);
     expect(sendChatMessage).toHaveBeenCalledWith('A, B, C, D, E — F, G');
   });
 });

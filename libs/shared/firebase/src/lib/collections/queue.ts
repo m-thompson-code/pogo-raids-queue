@@ -17,6 +17,7 @@ import type { RaidParams } from '../core/types.js';
  */
 export const addToQueue = async (params: RaidParams): Promise<void> => {
   const queueRef = getDb().collection('raidQueue').doc(params.twitchUserId);
+  const timedOutQueueRef = getDb().collection('timedOutQueue').doc(params.twitchUserId);
   const userRef = getDb().collection('users').doc(params.twitchUserId);
 
   await getDb().runTransaction(async (transaction) => {
@@ -38,12 +39,14 @@ export const addToQueue = async (params: RaidParams): Promise<void> => {
     };
 
     if (!existing.exists) {
+      transaction.delete(timedOutQueueRef);
       transaction.set(queueRef, {
         ...profileFields,
         status: 'joined',
         joinedAt: FieldValue.serverTimestamp(),
       });
     } else {
+      transaction.delete(timedOutQueueRef);
       transaction.update(queueRef, profileFields);
     }
   });
@@ -85,6 +88,11 @@ export const addToTimedOutQueue = async (params: RaidParams): Promise<void> => {
       transaction.update(queueRef, profileFields);
     }
   });
+};
+
+/** Removes the timed-out queue document for the given Twitch user ID. */
+export const removeFromTimedOutQueue = async (twitchUserId: string): Promise<void> => {
+  await getDb().collection('timedOutQueue').doc(twitchUserId).delete();
 };
 
 /**

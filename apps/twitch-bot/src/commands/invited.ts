@@ -6,7 +6,7 @@ import {
   setQueueEntryStatus,
   isFirestoreListenerActive,
 } from '../detectables/shared.js';
-import { getUser } from '@pogo-raid-system/firebase';
+import { resetUserStrikes } from '@pogo-raid-system/firebase';
 import { queue } from '../providers/queue.js';
 import { getInvitedCooldownMs } from '../persisted-settings.js';
 import type { ChatMessageEvent } from '../types.js';
@@ -16,9 +16,8 @@ let lastInvitedMessageAt = 0;
 /**
  * Handles the `!invited` command (and aliases: !thank, !thankyou, !ty).
  *
- * 1. If the user has no pogo username linked → show the raid usage hint.
- * 2. If they have a username but aren't in the queue → tell them they're not queued.
- * 3. If they're in the queue and not already 'invited' → mark them as invited
+ * 1. If the user isn't in the in-memory queue snapshot → tell them they're not queued.
+ * 2. If they're in the queue and not already 'invited' → mark them as invited
  *    and send the thank-you message (subject to a configurable cooldown).
  */
 export const handleInvitedCommand = async (
@@ -26,18 +25,18 @@ export const handleInvitedCommand = async (
 ): Promise<void> => {
   const { chatter_user_id, chatter_user_login } = event;
 
-  if (!isInQueue(chatter_user_id)) {
-    const user = await getUser(chatter_user_id);
-    if (!user?.pogoUsername) {
-      await sendChatMessage(messages.raidMissingUsername(chatter_user_login));
-      return;
-    }
+  const announceJoinedSuccess = async (): Promise<void> => {
+    await resetUserStrikes(chatter_user_id);
     const now = Date.now();
     const cooldownMs = getInvitedCooldownMs();
     if (cooldownMs === 0 || now - lastInvitedMessageAt >= cooldownMs) {
       lastInvitedMessageAt = now;
       await sendChatMessage(messages.invitedSuccess);
     }
+  };
+
+  if (!isInQueue(chatter_user_id)) {
+    await sendChatMessage(messages.invitedNotInQueue(chatter_user_login));
     return;
   }
 
@@ -50,10 +49,5 @@ export const handleInvitedCommand = async (
     setQueueEntryStatus(chatter_user_id, 'invited');
   }
 
-  const now = Date.now();
-  const cooldownMs = getInvitedCooldownMs();
-  if (cooldownMs === 0 || now - lastInvitedMessageAt >= cooldownMs) {
-    lastInvitedMessageAt = now;
-    await sendChatMessage(messages.invitedSuccess);
-  }
+  await announceJoinedSuccess();
 };

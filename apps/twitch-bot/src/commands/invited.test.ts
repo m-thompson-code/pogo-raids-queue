@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleInvitedCommand } from './invited.js';
+import { makeChatMessageEvent } from '../testing/chat-message-event.js';
 
 vi.mock('../api/chat.js', () => ({ sendChatMessage: vi.fn() }));
 vi.mock('../messages.js', () => ({
   messages: {
-    raidMissingUsername: (u: string) => `raidMissingUsername:${u}`,
     invitedNotInQueue: (u: string) => `invitedNotInQueue:${u}`,
     invitedSuccess: 'invitedSuccess',
   },
@@ -15,7 +15,7 @@ vi.mock('../detectables/shared.js', () => ({
   setQueueEntryStatus: vi.fn(),
   isFirestoreListenerActive: vi.fn(),
 }));
-vi.mock('@pogo-raid-system/firebase', () => ({ getUser: vi.fn() }));
+vi.mock('@pogo-raid-system/firebase', () => ({ resetUserStrikes: vi.fn() }));
 vi.mock('../providers/queue.js', () => ({
   queue: { setEntryStatus: vi.fn() },
 }));
@@ -30,16 +30,9 @@ import {
   setQueueEntryStatus,
   isFirestoreListenerActive,
 } from '../detectables/shared.js';
-import { getUser } from '@pogo-raid-system/firebase';
+import { resetUserStrikes } from '@pogo-raid-system/firebase';
 import { queue } from '../providers/queue.js';
 import { getInvitedCooldownMs } from '../persisted-settings.js';
-
-const makeEvent = (userId = 'u1', login = 'moo') => ({
-  chatter_user_id: userId,
-  chatter_user_login: login,
-  message: { text: '!invited' },
-  badges: [],
-});
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -49,42 +42,31 @@ beforeEach(() => {
 });
 
 describe('handleInvitedCommand', () => {
-  it('sends raidMissingUsername when user is not in queue and has no pogo username', async () => {
+  it('sends invitedNotInQueue when user is not in queue', async () => {
     vi.mocked(isInQueue).mockReturnValue(false);
-    vi.mocked(getUser).mockResolvedValue(null);
 
-    await handleInvitedCommand(makeEvent() as any);
+    await handleInvitedCommand(makeChatMessageEvent('!invited'));
 
-    expect(sendChatMessage).toHaveBeenCalledWith('raidMissingUsername:moo');
+    expect(resetUserStrikes).not.toHaveBeenCalled();
+    expect(sendChatMessage).toHaveBeenCalledWith('invitedNotInQueue:moo');
   });
 
-  it('sends invitedSuccess when user is not in queue but has a pogo username', async () => {
+  it('keeps prompting not-in-queue when user is not in queue', async () => {
     vi.mocked(isInQueue).mockReturnValue(false);
-    vi.mocked(getUser).mockResolvedValue({ pogoUsername: 'TrainerAsh' } as any);
-    vi.mocked(getInvitedCooldownMs).mockReturnValue(0);
-
-    await handleInvitedCommand(makeEvent() as any);
-
-    expect(sendChatMessage).toHaveBeenCalledWith('invitedSuccess');
-  });
-
-  it('respects cooldown when user is not in queue but has a pogo username', async () => {
-    vi.mocked(isInQueue).mockReturnValue(false);
-    vi.mocked(getUser).mockResolvedValue({ pogoUsername: 'TrainerAsh' } as any);
-    vi.mocked(getInvitedCooldownMs).mockReturnValue(0);
-    await handleInvitedCommand(makeEvent() as any);
+    await handleInvitedCommand(makeChatMessageEvent('!invited'));
     vi.mocked(sendChatMessage).mockClear();
 
     vi.mocked(getInvitedCooldownMs).mockReturnValue(60_000);
-    await handleInvitedCommand(makeEvent() as any);
-    expect(sendChatMessage).not.toHaveBeenCalled();
+    await handleInvitedCommand(makeChatMessageEvent('!invited'));
+    expect(sendChatMessage).toHaveBeenCalledWith('invitedNotInQueue:moo');
+    expect(resetUserStrikes).not.toHaveBeenCalled();
   });
 
   it('does nothing when user is already marked as invited', async () => {
     vi.mocked(isInQueue).mockReturnValue(true);
     vi.mocked(getQueueEntryStatus).mockReturnValue('invited');
 
-    await handleInvitedCommand(makeEvent() as any);
+    await handleInvitedCommand(makeChatMessageEvent('!invited'));
 
     expect(queue.setEntryStatus).not.toHaveBeenCalled();
     expect(sendChatMessage).not.toHaveBeenCalled();
@@ -95,9 +77,10 @@ describe('handleInvitedCommand', () => {
     vi.mocked(getQueueEntryStatus).mockReturnValue('joined');
     vi.mocked(getInvitedCooldownMs).mockReturnValue(0);
 
-    await handleInvitedCommand(makeEvent() as any);
+    await handleInvitedCommand(makeChatMessageEvent('!invited'));
 
     expect(queue.setEntryStatus).toHaveBeenCalledWith('u1', 'invited');
+    expect(resetUserStrikes).toHaveBeenCalledWith('u1');
     expect(sendChatMessage).toHaveBeenCalledWith('invitedSuccess');
   });
 
@@ -108,7 +91,7 @@ describe('handleInvitedCommand', () => {
     vi.mocked(queue.setEntryStatus).mockRejectedValue(new Error('db error'));
     vi.mocked(getInvitedCooldownMs).mockReturnValue(0);
 
-    await handleInvitedCommand(makeEvent() as any);
+    await handleInvitedCommand(makeChatMessageEvent('!invited'));
 
     expect(setQueueEntryStatus).toHaveBeenCalledWith('u1', 'invited');
     expect(sendChatMessage).toHaveBeenCalledWith('invitedSuccess');
@@ -119,7 +102,7 @@ describe('handleInvitedCommand', () => {
     vi.mocked(getQueueEntryStatus).mockReturnValue('joined');
     vi.mocked(isFirestoreListenerActive).mockReturnValue(true);
 
-    await handleInvitedCommand(makeEvent() as any);
+    await handleInvitedCommand(makeChatMessageEvent('!invited'));
 
     expect(setQueueEntryStatus).not.toHaveBeenCalled();
   });
@@ -135,7 +118,7 @@ describe('handleInvitedCommand', () => {
     vi.mocked(getInvitedCooldownMs).mockReturnValue(60_000);
 
     // First call at t=0 — sends the message
-    await handleInvitedCommand(makeEvent('u1', 'moo') as any);
+    await handleInvitedCommand(makeChatMessageEvent('!invited', { userId: 'u1', login: 'moo' }));
     expect(sendChatMessage).toHaveBeenCalledWith('invitedSuccess');
     vi.clearAllMocks();
 
@@ -144,8 +127,9 @@ describe('handleInvitedCommand', () => {
     vi.mocked(getQueueEntryStatus).mockReturnValue('joined');
     vi.mocked(getInvitedCooldownMs).mockReturnValue(60_000);
 
-    await handleInvitedCommand(makeEvent('u2', 'trainer') as any);
+    await handleInvitedCommand(makeChatMessageEvent('!invited', { userId: 'u2', login: 'trainer' }));
     expect(sendChatMessage).not.toHaveBeenCalled();
+    expect(resetUserStrikes).toHaveBeenCalledWith('u2');
 
     vi.useRealTimers();
   });

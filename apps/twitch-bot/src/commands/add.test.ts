@@ -14,6 +14,7 @@ vi.mock('../providers/queue.js', () => ({
 
 import { sendChatMessage } from '../api/chat.js';
 import { queue } from '../providers/queue.js';
+import type { ChatMessageEvent } from '../types.js';
 
 const makeEvent = (text: string) => ({
   chatter_user_id: 'u1',
@@ -26,20 +27,20 @@ beforeEach(() => vi.clearAllMocks());
 
 describe('handleAddCommand', () => {
   it('sends usage message when no username provided', async () => {
-    await handleAddCommand(makeEvent('!add') as any);
+    await handleAddCommand(makeEvent('!add') as unknown as ChatMessageEvent);
     expect(sendChatMessage).toHaveBeenCalledWith('addUsage:moo');
     expect(queue.addManual).not.toHaveBeenCalled();
   });
 
   it('adds a single username', async () => {
-    await handleAddCommand(makeEvent('!add TrainerAsh') as any);
+    await handleAddCommand(makeEvent('!add TrainerAsh') as unknown as ChatMessageEvent);
     expect(queue.addManual).toHaveBeenCalledOnce();
     expect(queue.addManual).toHaveBeenCalledWith('TrainerAsh');
     expect(sendChatMessage).toHaveBeenCalledWith('addSuccess:TrainerAsh:has');
   });
 
   it('adds multiple comma-separated usernames', async () => {
-    await handleAddCommand(makeEvent('!add Ash,Misty,Brock') as any);
+    await handleAddCommand(makeEvent('!add Ash,Misty,Brock') as unknown as ChatMessageEvent);
     expect(queue.addManual).toHaveBeenCalledTimes(3);
     expect(sendChatMessage).toHaveBeenCalledWith('addSuccess:Ash, Misty, Brock:have');
   });

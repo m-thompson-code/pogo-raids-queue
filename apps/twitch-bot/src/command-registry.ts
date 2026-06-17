@@ -118,6 +118,12 @@ export const COMMAND_REGISTRY: CommandMeta[] = [
     description: 'Force-triggers the Regirice animation',
   },
   {
+    command: 'strict',
+    usage: '!strict <on|off>',
+    permission: 'mods',
+    description: 'Enables or disables strict mode (duplicate !raid triggers strikes/timeout)',
+  },
+  {
     command: 'discord',
     usage: '!discord',
     permission: 'everyone',

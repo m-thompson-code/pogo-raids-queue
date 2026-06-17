@@ -19,6 +19,7 @@ vi.mock('../detectables/shared.js', () => ({
 import { sendChatMessage } from '../api/chat.js';
 import { strikeUser } from '@pogo-raid-system/firebase';
 import { getTwitchUserId } from '../api/twitch-api.js';
+import type { ChatMessageEvent } from '../types.js';
 
 const makeEvent = (text: string) => ({
   chatter_user_id: 'u1',
@@ -31,28 +32,28 @@ beforeEach(() => vi.clearAllMocks());
 
 describe('handleStrikeCommand', () => {
   it('sends usage when no target provided', async () => {
-    await handleStrikeCommand(makeEvent('!strike') as any);
+    await handleStrikeCommand(makeEvent('!strike') as unknown as ChatMessageEvent);
     expect(sendChatMessage).toHaveBeenCalledWith('strikeUsage:moo');
     expect(getTwitchUserId).not.toHaveBeenCalled();
   });
 
   it('sends not found when twitch user id lookup fails', async () => {
     vi.mocked(getTwitchUserId).mockResolvedValue(null);
-    await handleStrikeCommand(makeEvent('!strike UnknownUser') as any);
+    await handleStrikeCommand(makeEvent('!strike UnknownUser') as unknown as ChatMessageEvent);
     expect(sendChatMessage).toHaveBeenCalledWith('strikeNotFound:moo:UnknownUser');
   });
 
   it('strips @ prefix from target username', async () => {
     vi.mocked(getTwitchUserId).mockResolvedValue('999');
     vi.mocked(strikeUser).mockResolvedValue(1);
-    await handleStrikeCommand(makeEvent('!strike @SomeUser') as any);
+    await handleStrikeCommand(makeEvent('!strike @SomeUser') as unknown as ChatMessageEvent);
     expect(getTwitchUserId).toHaveBeenCalledWith('SomeUser');
   });
 
   it('increments strike (no explicit value)', async () => {
     vi.mocked(getTwitchUserId).mockResolvedValue('999');
     vi.mocked(strikeUser).mockResolvedValue(2);
-    await handleStrikeCommand(makeEvent('!strike TrainerAsh') as any);
+    await handleStrikeCommand(makeEvent('!strike TrainerAsh') as unknown as ChatMessageEvent);
     expect(strikeUser).toHaveBeenCalledWith('TrainerAsh', '999', undefined);
     expect(sendChatMessage).toHaveBeenCalledWith('strikeConfirm:TrainerAsh:2');
   });
@@ -60,7 +61,7 @@ describe('handleStrikeCommand', () => {
   it('sets explicit strike value', async () => {
     vi.mocked(getTwitchUserId).mockResolvedValue('999');
     vi.mocked(strikeUser).mockResolvedValue(5);
-    await handleStrikeCommand(makeEvent('!strike TrainerAsh 5') as any);
+    await handleStrikeCommand(makeEvent('!strike TrainerAsh 5') as unknown as ChatMessageEvent);
     expect(strikeUser).toHaveBeenCalledWith('TrainerAsh', '999', 5);
     expect(sendChatMessage).toHaveBeenCalledWith('strikeConfirm:TrainerAsh:5');
   });

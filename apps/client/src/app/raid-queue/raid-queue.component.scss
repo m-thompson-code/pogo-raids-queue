@@ -242,6 +242,18 @@
   flex-direction: column;
   gap: 0.45rem;
 
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.35rem;
+  }
+
   &__label {
     margin: 0;
     font-size: 1rem;
@@ -249,12 +261,6 @@
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--pill-timed-out-color);
-  }
-
-  &__hint {
-    margin: 0;
-    color: var(--label-color);
-    font-size: 0.9rem;
   }
 
   &__pills {

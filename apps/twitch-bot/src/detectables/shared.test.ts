@@ -14,11 +14,13 @@ import {
   clearQueueMemory,
   hydrateQueueMemory,
   isInQueue,
+  getQueuedPogoUsername,
   getQueueEntryStatus,
   setQueueEntryStatus,
   setFirestoreListenerActive,
   isFirestoreListenerActive,
 } from './shared.js';
+import type { ChatMessageEvent } from '../types.js';
 
 const makeEvent = (userId: string) => ({
   chatter_user_id: userId,
@@ -84,11 +86,11 @@ describe('firstTimeChatters', () => {
 
   it('isFirstTimeChatter returns true when user is in the set', () => {
     markFirstTimeChatter('u1');
-    expect(isFirstTimeChatter(makeEvent('u1') as any)).toBe(true);
+    expect(isFirstTimeChatter(makeEvent('u1') as unknown as ChatMessageEvent)).toBe(true);
   });
 
   it('isFirstTimeChatter returns false when user is not in the set', () => {
-    expect(isFirstTimeChatter(makeEvent('u1') as any)).toBe(false);
+    expect(isFirstTimeChatter(makeEvent('u1') as unknown as ChatMessageEvent)).toBe(false);
   });
 });
 
@@ -100,6 +102,7 @@ describe('queue memory', () => {
   it('markInQueue adds a user to the queue with default joined status', () => {
     markInQueue('u1', 'Ash');
     expect(isInQueue('u1')).toBe(true);
+    expect(getQueuedPogoUsername('u1')).toBe('Ash');
     expect(getQueueEntryStatus('u1')).toBe('joined');
   });
 
@@ -118,6 +121,7 @@ describe('queue memory', () => {
     markInQueue('u1', 'Ash');
     unmarkInQueueByTwitchId('u1');
     expect(isInQueue('u1')).toBe(false);
+    expect(getQueuedPogoUsername('u1')).toBeUndefined();
     expect(getQueueEntryStatus('u1')).toBeUndefined();
   });
 
@@ -146,6 +150,7 @@ describe('queue memory', () => {
     markInQueue('u2', 'Misty');
     clearQueueMemory();
     expect(isInQueue('u1')).toBe(false);
+    expect(getQueuedPogoUsername('u1')).toBeUndefined();
     expect(isInQueue('u2')).toBe(false);
   });
 });
@@ -157,8 +162,10 @@ describe('hydrateQueueMemory', () => {
       { twitchUserId: 'u2', pogoUsername: 'Misty', status: 'invited' },
     ]);
     expect(isInQueue('u1')).toBe(true);
+    expect(getQueuedPogoUsername('u1')).toBe('Ash');
     expect(getQueueEntryStatus('u1')).toBe('joined');
     expect(isInQueue('u2')).toBe(true);
+    expect(getQueuedPogoUsername('u2')).toBe('Misty');
     expect(getQueueEntryStatus('u2')).toBe('invited');
   });
 

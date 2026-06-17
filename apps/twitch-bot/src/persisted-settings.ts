@@ -28,6 +28,8 @@ interface PersistedSettings {
   infoCooldownSeconds: number;
   /** Commands that have been explicitly disabled. */
   disabledCommands: string[];
+  /** When true, duplicate !raid triggers strikes/timeouts instead of a simple notice. */
+  strictMode: boolean;
 }
 
 const DEFAULTS: PersistedSettings = {
@@ -38,6 +40,7 @@ const DEFAULTS: PersistedSettings = {
   intervalPromoSeconds: 840,
   infoCooldownSeconds: 30,
   disabledCommands: [],
+  strictMode: false,
 };
 
 let settings: PersistedSettings = { ...DEFAULTS };
@@ -99,3 +102,10 @@ export const enableCommand = (command: string): void => {
 };
 
 export const getDisabledCommands = (): readonly string[] => settings.disabledCommands;
+
+export const setStrictMode = (enabled: boolean): void => {
+  settings.strictMode = enabled;
+  save();
+};
+
+export const isStrictMode = (): boolean => settings.strictMode ?? false;

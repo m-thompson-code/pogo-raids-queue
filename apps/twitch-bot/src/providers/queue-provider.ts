@@ -42,6 +42,9 @@ export interface QueueProvider {
    */
   addToTimedOutQueue(params: RaidParams): Promise<void>;
 
+  /** Removes the timed-out queue entry for the given Twitch user ID. */
+  removeFromTimedOutQueue(twitchUserId: string): Promise<void>;
+
   /** Removes all entries from the queue. */
   clearQueue(): Promise<void>;
 

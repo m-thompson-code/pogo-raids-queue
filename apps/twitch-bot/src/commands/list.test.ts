@@ -9,6 +9,7 @@ vi.mock('../providers/queue.js', () => ({ queue: { getQueue: vi.fn() } }));
 
 import { sendChatMessage } from '../api/chat.js';
 import { queue } from '../providers/queue.js';
+import type { ChatMessageEvent } from '../types.js';
 
 const makeEntry = (pogoUsername: string) => ({
   pogoUsername,
@@ -31,13 +32,13 @@ beforeEach(() => vi.clearAllMocks());
 describe('handleListCommand', () => {
   it('sends empty message when queue is empty', async () => {
     vi.mocked(queue.getQueue).mockResolvedValue([]);
-    await handleListCommand(makeEvent() as any);
+    await handleListCommand(makeEvent() as unknown as ChatMessageEvent);
     expect(sendChatMessage).toHaveBeenCalledWith('listEmpty');
   });
 
   it('lists comma-separated pogo usernames', async () => {
     vi.mocked(queue.getQueue).mockResolvedValue(['Ash', 'Misty', 'Brock'].map(makeEntry));
-    await handleListCommand(makeEvent() as any);
+    await handleListCommand(makeEvent() as unknown as ChatMessageEvent);
     expect(sendChatMessage).toHaveBeenCalledWith('Ash,Misty,Brock');
   });
 });

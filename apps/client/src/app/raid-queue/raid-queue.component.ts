@@ -127,4 +127,16 @@ export class RaidQueueComponent {
     await this.raidQueueService.releaseTimedOutEntry(entry);
     this.showSnackbar(`${entry.pogoUsername} moved back to queue`);
   }
+
+  protected async releaseAllTimedOutEntries(entries: QueueEntry[]): Promise<void> {
+    if (entries.length === 0) return;
+    await this.raidQueueService.releaseAllTimedOutEntries(entries);
+    this.showSnackbar(`${entries.length} timed-out user${entries.length === 1 ? '' : 's'} moved back to queue`);
+  }
+
+  protected async clearAllTimedOutEntries(entries: QueueEntry[]): Promise<void> {
+    if (entries.length === 0) return;
+    await this.raidQueueService.clearAllTimedOutEntries(entries);
+    this.showSnackbar(`${entries.length} timed-out user${entries.length === 1 ? '' : 's'} cleared`);
+  }
 }

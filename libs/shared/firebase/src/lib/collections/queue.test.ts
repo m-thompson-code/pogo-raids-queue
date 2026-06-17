@@ -13,6 +13,7 @@ const mockTransaction = {
   get: mockTransactionGet,
   set: mockSet,
   update: mockUpdate,
+  delete: mockDelete,
 };
 
 const mockRunTransaction = vi.fn(
@@ -93,6 +94,7 @@ describe('addToQueue', () => {
     await addToQueue(baseParams);
 
     expect(mockSet).toHaveBeenCalledOnce();
+    expect(mockDelete).toHaveBeenCalledOnce();
     const [, data] = mockSet.mock.calls[0];
     expect(data).toMatchObject({
       twitchUserId: 'user-123',
@@ -111,6 +113,7 @@ describe('addToQueue', () => {
     await addToQueue(baseParams);
 
     expect(mockUpdate).toHaveBeenCalledOnce();
+    expect(mockDelete).toHaveBeenCalledOnce();
     const [, data] = mockUpdate.mock.calls[0];
     expect(data).not.toHaveProperty('joinedAt');
     expect(data).toMatchObject({
@@ -125,6 +128,7 @@ describe('addToQueue', () => {
     await addToQueue(baseParams);
 
     expect(mockCollection).toHaveBeenCalledWith('raidQueue');
+    expect(mockCollection).toHaveBeenCalledWith('timedOutQueue');
     expect(mockDoc).toHaveBeenCalledWith('user-123');
   });
 });

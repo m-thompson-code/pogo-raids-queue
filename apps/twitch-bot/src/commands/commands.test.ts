@@ -27,6 +27,7 @@ vi.mock('../permissions.js', () => ({
 import { sendChatMessage } from '../api/chat.js';
 import { isCommandEnabled } from '../persisted-settings.js';
 import { isPrivileged } from '../permissions.js';
+import type { ChatMessageEvent } from '../types.js';
 
 const makeEvent = (text: string) => ({
   chatter_user_id: 'u1',
@@ -45,7 +46,7 @@ describe('handleCommandsCommand', () => {
     it('lists all enabled commands for a non-privileged user', async () => {
       vi.mocked(isPrivileged).mockReturnValue(false);
 
-      await handleCommandsCommand(makeEvent('!commands') as any);
+      await handleCommandsCommand(makeEvent('!commands') as unknown as ChatMessageEvent);
 
       const [msg] = vi.mocked(sendChatMessage).mock.calls[0];
       expect(msg).toContain('!raid');
@@ -56,7 +57,7 @@ describe('handleCommandsCommand', () => {
     it('lists all enabled commands including mod-only for privileged user', async () => {
       vi.mocked(isPrivileged).mockReturnValue(true);
 
-      await handleCommandsCommand(makeEvent('!commands') as any);
+      await handleCommandsCommand(makeEvent('!commands') as unknown as ChatMessageEvent);
 
       const [msg] = vi.mocked(sendChatMessage).mock.calls[0];
       expect(msg).toContain('!raid');
@@ -66,7 +67,7 @@ describe('handleCommandsCommand', () => {
     it('includes aliases in the listing', async () => {
       vi.mocked(isPrivileged).mockReturnValue(false);
 
-      await handleCommandsCommand(makeEvent('!commands') as any);
+      await handleCommandsCommand(makeEvent('!commands') as unknown as ChatMessageEvent);
 
       const [msg] = vi.mocked(sendChatMessage).mock.calls[0];
       expect(msg).toContain('!r');
@@ -76,7 +77,7 @@ describe('handleCommandsCommand', () => {
       vi.mocked(isPrivileged).mockReturnValue(false);
       vi.mocked(isCommandEnabled).mockImplementation((cmd) => cmd !== 'raid');
 
-      await handleCommandsCommand(makeEvent('!commands') as any);
+      await handleCommandsCommand(makeEvent('!commands') as unknown as ChatMessageEvent);
 
       const [msg] = vi.mocked(sendChatMessage).mock.calls[0];
       expect(msg).not.toContain('!raid');
@@ -87,7 +88,7 @@ describe('handleCommandsCommand', () => {
     it('sends usage and description for a known command', async () => {
       vi.mocked(isPrivileged).mockReturnValue(true);
 
-      await handleCommandsCommand(makeEvent('!commands raid') as any);
+      await handleCommandsCommand(makeEvent('!commands raid') as unknown as ChatMessageEvent);
 
       expect(sendChatMessage).toHaveBeenCalledWith(
         expect.stringContaining('Join the queue')
@@ -97,7 +98,7 @@ describe('handleCommandsCommand', () => {
     it('sends error for an unknown command', async () => {
       vi.mocked(isPrivileged).mockReturnValue(true);
 
-      await handleCommandsCommand(makeEvent('!commands unknowncmd') as any);
+      await handleCommandsCommand(makeEvent('!commands unknowncmd') as unknown as ChatMessageEvent);
 
       expect(sendChatMessage).toHaveBeenCalledWith('Unknown command: !unknowncmd');
     });
@@ -105,7 +106,7 @@ describe('handleCommandsCommand', () => {
     it('sends permission error for non-privileged user on a mod command', async () => {
       vi.mocked(isPrivileged).mockReturnValue(false);
 
-      await handleCommandsCommand(makeEvent('!commands clear') as any);
+      await handleCommandsCommand(makeEvent('!commands clear') as unknown as ChatMessageEvent);
 
       expect(sendChatMessage).toHaveBeenCalledWith(
         'You do not have permission to use !clear.'
@@ -115,7 +116,7 @@ describe('handleCommandsCommand', () => {
     it('strips ! prefix from the target', async () => {
       vi.mocked(isPrivileged).mockReturnValue(true);
 
-      await handleCommandsCommand(makeEvent('!commands !raid') as any);
+      await handleCommandsCommand(makeEvent('!commands !raid') as unknown as ChatMessageEvent);
 
       expect(sendChatMessage).toHaveBeenCalledWith(
         expect.stringContaining('Join the queue')

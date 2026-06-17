@@ -2,6 +2,7 @@ import {
   upsertUser as firestoreUpsertUser,
   addToQueue as firestoreAddToQueue,
   addToTimedOutQueue as firestoreAddToTimedOutQueue,
+  removeFromTimedOutQueue as firestoreRemoveFromTimedOutQueue,
   clearQueue as firestoreClearQueue,
   getQueue as firestoreGetQueue,
   addManualToQueue as firestoreAddManualToQueue,
@@ -26,6 +27,10 @@ export class FirestoreQueueProvider implements QueueProvider {
 
   async addToTimedOutQueue(params: RaidParams): Promise<void> {
     await firestoreAddToTimedOutQueue(params);
+  }
+
+  async removeFromTimedOutQueue(twitchUserId: string): Promise<void> {
+    await firestoreRemoveFromTimedOutQueue(twitchUserId);
   }
 
   async clearQueue(): Promise<void> {

@@ -40,7 +40,7 @@ vi.mock('../core/firebase.js', () => ({
   getDb: vi.fn(() => mockDb),
 }));
 
-const { upsertUser, strikeUser } = await import('./users.js');
+const { upsertUser, strikeUser, resetUserStrikes } = await import('./users.js');
 
 // ── Shared test data ─────────────────────────────────────────────────────────
 
@@ -181,5 +181,22 @@ describe('strikeUser', () => {
     const [, data] = mockSet.mock.calls[0];
     expect(result).toBe(3);
     expect(data.timedOutAt).toBe(SENTINEL_TIMESTAMP);
+  });
+});
+
+describe('resetUserStrikes', () => {
+  beforeEach(() => {
+    mockSet.mockReset();
+    mockTransactionGet.mockReset();
+  });
+
+  it('sets strikes to zero for the user document', async () => {
+    await resetUserStrikes('user-123');
+
+    expect(mockSet).toHaveBeenCalledOnce();
+    const [docRef, data, options] = mockSet.mock.calls[0];
+    expect(docRef).toBe(mockDocRef);
+    expect(data).toMatchObject({ twitchUserId: 'user-123', strikes: 0 });
+    expect(options).toEqual({ merge: true });
   });
 });

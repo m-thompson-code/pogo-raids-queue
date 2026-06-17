@@ -17,6 +17,7 @@ vi.mock('../queue-state.js', () => ({
 
 import { sendChatMessage } from '../api/chat.js';
 import { closeQueue, openQueue } from '../queue-state.js';
+import type { ChatMessageEvent } from '../types.js';
 
 const makeEvent = (login = 'moo') => ({
   chatter_user_id: 'u1',
@@ -29,7 +30,7 @@ beforeEach(() => vi.clearAllMocks());
 
 describe('handleCloseCommand', () => {
   it('closes the queue and sends confirmation', async () => {
-    await handleCloseCommand(makeEvent() as any);
+    await handleCloseCommand(makeEvent() as unknown as ChatMessageEvent);
     expect(closeQueue).toHaveBeenCalledOnce();
     expect(sendChatMessage).toHaveBeenCalledWith('closeSuccess:moo');
   });
@@ -37,7 +38,7 @@ describe('handleCloseCommand', () => {
 
 describe('handleOpenCommand', () => {
   it('opens the queue and sends confirmation', async () => {
-    await handleOpenCommand(makeEvent() as any);
+    await handleOpenCommand(makeEvent() as unknown as ChatMessageEvent);
     expect(openQueue).toHaveBeenCalledOnce();
     expect(sendChatMessage).toHaveBeenCalledWith('openSuccess:moo');
   });

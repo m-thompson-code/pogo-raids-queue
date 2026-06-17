@@ -8,6 +8,7 @@ vi.mock('../persisted-settings.js', () => ({
 
 import { sendChatMessage } from '../api/chat.js';
 import { setHintCooldownSeconds } from '../persisted-settings.js';
+import type { ChatMessageEvent } from '../types.js';
 
 const makeEvent = (text: string, login = 'moo') => ({
   chatter_user_id: 'u1',
@@ -20,7 +21,7 @@ beforeEach(() => vi.clearAllMocks());
 
 describe('handleHintCooldownCommand', () => {
   it('sends usage when no seconds argument is given', async () => {
-    await handleHintCooldownCommand(makeEvent('!hintcooldown') as any);
+    await handleHintCooldownCommand(makeEvent('!hintcooldown') as unknown as ChatMessageEvent);
     expect(sendChatMessage).toHaveBeenCalledWith(
       '@moo Usage: !hintcooldown <seconds>'
     );
@@ -28,7 +29,7 @@ describe('handleHintCooldownCommand', () => {
   });
 
   it('sends usage when argument is not a number', async () => {
-    await handleHintCooldownCommand(makeEvent('!hintcooldown abc') as any);
+    await handleHintCooldownCommand(makeEvent('!hintcooldown abc') as unknown as ChatMessageEvent);
     expect(sendChatMessage).toHaveBeenCalledWith(
       '@moo Usage: !hintcooldown <seconds>'
     );
@@ -36,7 +37,7 @@ describe('handleHintCooldownCommand', () => {
   });
 
   it('sends usage when argument is negative', async () => {
-    await handleHintCooldownCommand(makeEvent('!hintcooldown -5') as any);
+    await handleHintCooldownCommand(makeEvent('!hintcooldown -5') as unknown as ChatMessageEvent);
     expect(sendChatMessage).toHaveBeenCalledWith(
       '@moo Usage: !hintcooldown <seconds>'
     );
@@ -44,7 +45,7 @@ describe('handleHintCooldownCommand', () => {
   });
 
   it('sets cooldown to zero and confirms with singular "second"', async () => {
-    await handleHintCooldownCommand(makeEvent('!hintcooldown 0') as any);
+    await handleHintCooldownCommand(makeEvent('!hintcooldown 0') as unknown as ChatMessageEvent);
     expect(setHintCooldownSeconds).toHaveBeenCalledWith(0);
     expect(sendChatMessage).toHaveBeenCalledWith(
       '@moo Hint cooldown set to 0 seconds.'
@@ -52,7 +53,7 @@ describe('handleHintCooldownCommand', () => {
   });
 
   it('sets cooldown and confirms with singular "second" for 1', async () => {
-    await handleHintCooldownCommand(makeEvent('!hintcooldown 1') as any);
+    await handleHintCooldownCommand(makeEvent('!hintcooldown 1') as unknown as ChatMessageEvent);
     expect(setHintCooldownSeconds).toHaveBeenCalledWith(1);
     expect(sendChatMessage).toHaveBeenCalledWith(
       '@moo Hint cooldown set to 1 second.'
@@ -60,7 +61,7 @@ describe('handleHintCooldownCommand', () => {
   });
 
   it('sets cooldown and confirms with plural "seconds" for >1', async () => {
-    await handleHintCooldownCommand(makeEvent('!hintcooldown 30') as any);
+    await handleHintCooldownCommand(makeEvent('!hintcooldown 30') as unknown as ChatMessageEvent);
     expect(setHintCooldownSeconds).toHaveBeenCalledWith(30);
     expect(sendChatMessage).toHaveBeenCalledWith(
       '@moo Hint cooldown set to 30 seconds.'

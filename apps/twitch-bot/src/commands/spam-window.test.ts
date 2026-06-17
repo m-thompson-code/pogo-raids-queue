@@ -11,6 +11,7 @@ vi.mock('../detectables/spam-detection.js', () => ({ setSpamWindow: vi.fn() }));
 
 import { sendChatMessage } from '../api/chat.js';
 import { setSpamWindow } from '../detectables/spam-detection.js';
+import type { ChatMessageEvent } from '../types.js';
 
 const makeEvent = (text: string) => ({
   chatter_user_id: 'u1',
@@ -23,7 +24,7 @@ beforeEach(() => vi.clearAllMocks());
 
 describe('handleSpamWindowCommand', () => {
   it('sends usage when no argument provided', async () => {
-    await handleSpamWindowCommand(makeEvent('!spamwindow') as any);
+    await handleSpamWindowCommand(makeEvent('!spamwindow') as unknown as ChatMessageEvent);
     expect(sendChatMessage).toHaveBeenCalledWith(
       '@moo Usage: !spamwindow <seconds> (0 = off)'
     );
@@ -31,7 +32,7 @@ describe('handleSpamWindowCommand', () => {
   });
 
   it('sends usage when argument is not a number', async () => {
-    await handleSpamWindowCommand(makeEvent('!spamwindow abc') as any);
+    await handleSpamWindowCommand(makeEvent('!spamwindow abc') as unknown as ChatMessageEvent);
     expect(sendChatMessage).toHaveBeenCalledWith(
       '@moo Usage: !spamwindow <seconds> (0 = off)'
     );
@@ -39,7 +40,7 @@ describe('handleSpamWindowCommand', () => {
   });
 
   it('sends usage when argument is negative', async () => {
-    await handleSpamWindowCommand(makeEvent('!spamwindow -5') as any);
+    await handleSpamWindowCommand(makeEvent('!spamwindow -5') as unknown as ChatMessageEvent);
     expect(sendChatMessage).toHaveBeenCalledWith(
       '@moo Usage: !spamwindow <seconds> (0 = off)'
     );
@@ -47,13 +48,13 @@ describe('handleSpamWindowCommand', () => {
   });
 
   it('sets spam window in ms and confirms', async () => {
-    await handleSpamWindowCommand(makeEvent('!spamwindow 30') as any);
+    await handleSpamWindowCommand(makeEvent('!spamwindow 30') as unknown as ChatMessageEvent);
     expect(setSpamWindow).toHaveBeenCalledWith(30_000);
     expect(sendChatMessage).toHaveBeenCalledWith('spamWindowSet:moo:30');
   });
 
   it('accepts 0 to disable spam detection', async () => {
-    await handleSpamWindowCommand(makeEvent('!spamwindow 0') as any);
+    await handleSpamWindowCommand(makeEvent('!spamwindow 0') as unknown as ChatMessageEvent);
     expect(setSpamWindow).toHaveBeenCalledWith(0);
     expect(sendChatMessage).toHaveBeenCalledWith('spamWindowSet:moo:0');
   });

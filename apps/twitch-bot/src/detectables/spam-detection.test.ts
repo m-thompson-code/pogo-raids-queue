@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ChatMessageEvent } from '../types.js';
 
 vi.mock('../api/chat.js', () => ({ sendChatMessage: vi.fn() }));
 vi.mock('../messages.js', () => ({
@@ -13,11 +14,19 @@ import { checkSpam, setSpamWindow } from './spam-detection.js';
 import { sendChatMessage } from '../api/chat.js';
 import { getSpamWindowMs, setSpamWindowSeconds } from '../persisted-settings.js';
 
-const makeEvent = (text: string, userId = 'u1', login = 'moo') => ({
+const makeEvent = (text: string, userId = 'u1', login = 'moo'): ChatMessageEvent => ({
   chatter_user_id: userId,
   chatter_user_login: login,
+  chatter_user_name: login,
+  broadcaster_user_id: 'b1',
+  broadcaster_user_login: 'streamer',
+  broadcaster_user_name: 'streamer',
+  message_id: 'msg-1',
   message: { text },
+  color: '',
+  message_type: 'text',
   badges: [],
+  reply: undefined,
 });
 
 // Reset module-level userRecords between tests by calling setSpamWindow(0),
@@ -44,62 +53,62 @@ describe('setSpamWindow', () => {
 describe('checkSpam', () => {
   it('returns false immediately when spam window is disabled', () => {
     vi.mocked(getSpamWindowMs).mockReturnValue(0);
-    const result = checkSpam(makeEvent('hello') as any);
+    const result = checkSpam(makeEvent('hello'));
     expect(result).toBe(false);
     expect(sendChatMessage).not.toHaveBeenCalled();
   });
 
   it('returns false for text that normalises to empty', () => {
-    const result = checkSpam(makeEvent('😀 😂 🎉') as any);
+    const result = checkSpam(makeEvent('😀 😂 🎉'));
     expect(result).toBe(false);
     expect(sendChatMessage).not.toHaveBeenCalled();
   });
 
   it('returns false when message count is below threshold', () => {
-    checkSpam(makeEvent('hello') as any);
-    const result = checkSpam(makeEvent('hello') as any);
+    checkSpam(makeEvent('hello'));
+    const result = checkSpam(makeEvent('hello'));
     expect(result).toBe(false);
     expect(sendChatMessage).not.toHaveBeenCalled();
   });
 
   it('returns true and sends warning when threshold (3) is reached', () => {
-    checkSpam(makeEvent('hello') as any);
-    checkSpam(makeEvent('hello') as any);
-    const result = checkSpam(makeEvent('hello') as any);
+    checkSpam(makeEvent('hello'));
+    checkSpam(makeEvent('hello'));
+    const result = checkSpam(makeEvent('hello'));
     expect(result).toBe(true);
     expect(sendChatMessage).toHaveBeenCalledWith('spamWarning:moo');
   });
 
   it('normalises case and whitespace before comparing', () => {
-    checkSpam(makeEvent('HELLO') as any);
-    checkSpam(makeEvent('  hello  ') as any);
-    const result = checkSpam(makeEvent('Hello') as any);
+    checkSpam(makeEvent('HELLO'));
+    checkSpam(makeEvent('  hello  '));
+    const result = checkSpam(makeEvent('Hello'));
     expect(result).toBe(true);
   });
 
   it('resets count when message content changes', () => {
-    checkSpam(makeEvent('hello') as any);
-    checkSpam(makeEvent('hello') as any);
-    checkSpam(makeEvent('different message') as any); // resets
-    checkSpam(makeEvent('different message') as any);
-    const result = checkSpam(makeEvent('different message') as any);
+    checkSpam(makeEvent('hello'));
+    checkSpam(makeEvent('hello'));
+    checkSpam(makeEvent('different message')); // resets
+    checkSpam(makeEvent('different message'));
+    const result = checkSpam(makeEvent('different message'));
     expect(result).toBe(true);
     expect(sendChatMessage).toHaveBeenCalledOnce();
   });
 
   it('tracks users independently', () => {
-    checkSpam(makeEvent('hello', 'u1', 'alice') as any);
-    checkSpam(makeEvent('hello', 'u1', 'alice') as any);
-    checkSpam(makeEvent('hello', 'u2', 'bob') as any); // different user, no warning
+    checkSpam(makeEvent('hello', 'u1', 'alice'));
+    checkSpam(makeEvent('hello', 'u1', 'alice'));
+    checkSpam(makeEvent('hello', 'u2', 'bob')); // different user, no warning
     expect(sendChatMessage).not.toHaveBeenCalled();
   });
 
   it('does not send a second warning within the cooldown period', () => {
     vi.useFakeTimers();
-    checkSpam(makeEvent('hello') as any);
-    checkSpam(makeEvent('hello') as any);
-    checkSpam(makeEvent('hello') as any); // triggers warning
-    checkSpam(makeEvent('hello') as any); // still in cooldown
+    checkSpam(makeEvent('hello'));
+    checkSpam(makeEvent('hello'));
+    checkSpam(makeEvent('hello')); // triggers warning
+    checkSpam(makeEvent('hello')); // still in cooldown
     expect(sendChatMessage).toHaveBeenCalledOnce();
     vi.useRealTimers();
   });
@@ -109,13 +118,13 @@ describe('checkSpam', () => {
     // Use a window longer than WARN_COOLDOWN_MS (60s) so timestamps survive
     vi.mocked(getSpamWindowMs).mockReturnValue(120_000);
 
-    checkSpam(makeEvent('hello') as any);
-    checkSpam(makeEvent('hello') as any);
-    checkSpam(makeEvent('hello') as any); // first warning at t=0
+    checkSpam(makeEvent('hello'));
+    checkSpam(makeEvent('hello'));
+    checkSpam(makeEvent('hello')); // first warning at t=0
 
     vi.advanceTimersByTime(60_001); // past WARN_COOLDOWN_MS, but within spam window
 
-    checkSpam(makeEvent('hello') as any); // second warning (count >= 3, cooldown expired)
+    checkSpam(makeEvent('hello')); // second warning (count >= 3, cooldown expired)
     expect(sendChatMessage).toHaveBeenCalledTimes(2);
     vi.useRealTimers();
   });
@@ -124,14 +133,14 @@ describe('checkSpam', () => {
     vi.useFakeTimers();
     vi.mocked(getSpamWindowMs).mockReturnValue(5_000);
 
-    checkSpam(makeEvent('hello') as any);
-    checkSpam(makeEvent('hello') as any);
+    checkSpam(makeEvent('hello'));
+    checkSpam(makeEvent('hello'));
 
     vi.advanceTimersByTime(5_001); // both timestamps now outside window
 
-    checkSpam(makeEvent('hello') as any); // only 1 in window — not spam
-    checkSpam(makeEvent('hello') as any); // 2 in window — not spam
-    const result = checkSpam(makeEvent('hello') as any); // 3 in window — spam
+    checkSpam(makeEvent('hello')); // only 1 in window — not spam
+    checkSpam(makeEvent('hello')); // 2 in window — not spam
+    const result = checkSpam(makeEvent('hello')); // 3 in window — spam
     expect(result).toBe(true);
     vi.useRealTimers();
   });

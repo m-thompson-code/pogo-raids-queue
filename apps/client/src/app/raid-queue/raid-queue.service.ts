@@ -30,6 +30,9 @@ export interface QueueEntry {
 
 @Injectable({ providedIn: 'root' })
 export class RaidQueueService implements OnDestroy {
+  private static readonly RELEASE_ENTRY_OPS = 3;
+  private static readonly CLEAR_ENTRY_OPS = 2;
+  private static readonly FIRESTORE_BATCH_LIMIT = 500;
   private readonly queue$ = new BehaviorSubject<QueueEntry[] | null>(null);
   private readonly timedOutQueue$ = new BehaviorSubject<QueueEntry[] | null>(null);
   private queueUnsubscribe: Unsubscribe | null = null;
@@ -133,6 +136,56 @@ export class RaidQueueService implements OnDestroy {
   async releaseTimedOutEntry(entry: QueueEntry): Promise<void> {
     const db = getFirestore();
     const batch = writeBatch(db);
+    this.addReleaseTimedOutEntryToBatch(entry, batch, db);
+    await batch.commit();
+  }
+
+  /** Clears timeout and moves all users from timedOutQueue back to raidQueue. */
+  async releaseAllTimedOutEntries(entries: QueueEntry[]): Promise<void> {
+    if (entries.length === 0) return;
+
+    const db = getFirestore();
+    const maxEntriesPerBatch = Math.floor(
+      RaidQueueService.FIRESTORE_BATCH_LIMIT / RaidQueueService.RELEASE_ENTRY_OPS
+    );
+
+    for (let i = 0; i < entries.length; i += maxEntriesPerBatch) {
+      const batch = writeBatch(db);
+      const chunk = entries.slice(i, i + maxEntriesPerBatch);
+      for (const entry of chunk) {
+        this.addReleaseTimedOutEntryToBatch(entry, batch, db);
+      }
+      await batch.commit();
+    }
+  }
+
+  /** Clears timeout state and removes all users from timedOutQueue without queueing them. */
+  async clearAllTimedOutEntries(entries: QueueEntry[]): Promise<void> {
+    if (entries.length === 0) return;
+
+    const db = getFirestore();
+    const maxEntriesPerBatch = Math.floor(
+      RaidQueueService.FIRESTORE_BATCH_LIMIT / RaidQueueService.CLEAR_ENTRY_OPS
+    );
+
+    for (let i = 0; i < entries.length; i += maxEntriesPerBatch) {
+      const batch = writeBatch(db);
+      const chunk = entries.slice(i, i + maxEntriesPerBatch);
+      for (const entry of chunk) {
+        const userRef = doc(db, 'users', entry.twitchUserId);
+        const timedOutRef = doc(db, 'timedOutQueue', entry.twitchUserId);
+        batch.set(userRef, { timedOutAt: deleteField() }, { merge: true });
+        batch.delete(timedOutRef);
+      }
+      await batch.commit();
+    }
+  }
+
+  private addReleaseTimedOutEntryToBatch(
+    entry: QueueEntry,
+    batch: ReturnType<typeof writeBatch>,
+    db: ReturnType<typeof getFirestore>,
+  ): void {
     const userRef = doc(db, 'users', entry.twitchUserId);
     const timedOutRef = doc(db, 'timedOutQueue', entry.twitchUserId);
     const queueRef = doc(db, 'raidQueue', entry.twitchUserId);
@@ -149,7 +202,6 @@ export class RaidQueueService implements OnDestroy {
       ...(entry.createdAt ? { createdAt: entry.createdAt } : {}),
     });
     batch.delete(timedOutRef);
-    await batch.commit();
   }
 
   ngOnDestroy(): void {

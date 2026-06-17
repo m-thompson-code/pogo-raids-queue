@@ -33,6 +33,7 @@ export const CANONICAL_COMMANDS = [
   'commands',
   'groups',
   'regirice',
+  'strict',
 ] as const;
 
 export type CanonicalCommand = (typeof CANONICAL_COMMANDS)[number];
@@ -73,6 +74,7 @@ export const COMMAND_ALIASES: Record<string, CanonicalCommand> = {
   commands: 'commands',
   groups: 'groups',
   regirice: 'regirice',
+  strict: 'strict',
 
   // aliases
   r: 'raid',

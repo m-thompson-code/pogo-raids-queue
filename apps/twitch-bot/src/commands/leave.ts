@@ -15,5 +15,9 @@ export const handleLeaveCommand = async (
     pogoUsername = null;
     unmarkInQueueByTwitchId(event.chatter_user_id);
   }
-  await sendChatMessage(messages.leaveRemoved(pogoUsername ?? event.chatter_user_login));
+  await sendChatMessage(
+    pogoUsername
+      ? messages.leaveRemoved(pogoUsername)
+      : messages.leaveNotInQueue(event.chatter_user_login)
+  );
 };

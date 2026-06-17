@@ -92,3 +92,11 @@ export const strikeUser = async (
     return nextStrikes;
   });
 };
+
+/** Resets a user's strike count back to zero. */
+export const resetUserStrikes = async (twitchUserId: string): Promise<void> => {
+  const docRef = getDb().collection('users').doc(twitchUserId);
+  await getDb().runTransaction(async (transaction) => {
+    transaction.set(docRef, { twitchUserId, strikes: 0 }, { merge: true });
+  });
+};

@@ -67,6 +67,23 @@ src/
 | `sendChatMessage(chatMessage)` | Posts a message to the configured channel via `POST https://api.twitch.tv/helix/chat/messages`. Logs success or error. |
 | `registerEventSubListeners(sessionId)` | Subscribes to `channel.chat.message` via `POST https://api.twitch.tv/helix/eventsub/subscriptions` using the WebSocket session ID. Exits with code 1 on failure. Passed as `onSessionWelcome` to `connectBot`. |
 
+## Queue state rules
+
+- Treat `detectables/shared.ts` as the source of truth for session queue state.
+- Use the in-memory queue helpers first when a command only needs to know whether a user is in the queue or what pogo username is already attached to that queue entry.
+- Only read Firestore when the information is not already available in memory or when the command needs persisted timeout/user data.
+- `!invited` must only use in-memory queue state for the "not in queue" branch and should not query `users` just to decide between messages.
+- Duplicate `!raid` from a user already in queue must return `raidAlreadyInQueue` during a 2-minute grace window; this window takes precedence over strict-mode strike handling.
+- If a timed-out user is manually restored to `raidQueue`, `!raid` should treat them as in-queue again (no re-add path). The bot reconciles stale local timeout flags against persisted `users.timedOutAt`.
+- Never use `chatter_user_login` as a fallback pogo username. Twitch logins and pogo usernames are different values, and substituting one for the other is always a bug.
+
+Relevant helpers:
+
+- `markInQueue()` / `unmarkInQueueByTwitchId()` keep the local queue snapshot in sync.
+- `getQueuedPogoUsername()` returns the pogo username already attached to a queued Twitch user.
+- `hydrateQueueMemory()` repopulates the in-memory snapshot from Firestore on startup.
+- `isFirestoreListenerActive()` tells command handlers whether the live listener is healthy or whether they should update local state directly as a fallback.
+
 ---
 
 ## First-time setup

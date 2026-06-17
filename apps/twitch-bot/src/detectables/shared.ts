@@ -42,17 +42,21 @@ export const usersThatHaveRaidedBefore = new Map<string, boolean>();
 const queuedTwitchUserIds = new Set<string>();
 /** Reverse map for pogo-username-based removal (e.g. !remove). */
 const queuePogoToTwitchId = new Map<string, string>();
+/** Forward map for Twitch-ID-based lookup without hitting Firestore. */
+const queuePogoByTwitchId = new Map<string, string>();
 /** Tracks the current status of each queued user. */
 const queueEntryStatuses = new Map<string, 'joined' | 'invited' | 'copied'>();
 
 export const markInQueue = (twitchUserId: string, pogoUsername: string, status: 'joined' | 'invited' | 'copied' = 'joined'): void => {
   queuedTwitchUserIds.add(twitchUserId);
+  queuePogoByTwitchId.set(twitchUserId, pogoUsername);
   queuePogoToTwitchId.set(pogoUsername.toLowerCase(), twitchUserId);
   queueEntryStatuses.set(twitchUserId, status);
 };
 
 export const unmarkInQueueByTwitchId = (twitchUserId: string): void => {
   queuedTwitchUserIds.delete(twitchUserId);
+  queuePogoByTwitchId.delete(twitchUserId);
   queueEntryStatuses.delete(twitchUserId);
   for (const [pogo, id] of queuePogoToTwitchId) {
     if (id === twitchUserId) { queuePogoToTwitchId.delete(pogo); break; }
@@ -63,6 +67,7 @@ export const unmarkInQueueByPogoUsername = (pogoUsername: string): void => {
   const twitchUserId = queuePogoToTwitchId.get(pogoUsername.toLowerCase());
   if (twitchUserId) {
     queuedTwitchUserIds.delete(twitchUserId);
+    queuePogoByTwitchId.delete(twitchUserId);
     queuePogoToTwitchId.delete(pogoUsername.toLowerCase());
     queueEntryStatuses.delete(twitchUserId);
   }
@@ -70,6 +75,7 @@ export const unmarkInQueueByPogoUsername = (pogoUsername: string): void => {
 
 export const clearQueueMemory = (): void => {
   queuedTwitchUserIds.clear();
+  queuePogoByTwitchId.clear();
   queuePogoToTwitchId.clear();
   queueEntryStatuses.clear();
 };
@@ -84,6 +90,9 @@ export const hydrateQueueMemory = (entries: Array<{ twitchUserId: string; pogoUs
 
 export const isInQueue = (twitchUserId: string): boolean =>
   queuedTwitchUserIds.has(twitchUserId);
+
+export const getQueuedPogoUsername = (twitchUserId: string): string | undefined =>
+  queuePogoByTwitchId.get(twitchUserId);
 
 export const getQueueEntryStatus = (twitchUserId: string): 'joined' | 'invited' | 'copied' | undefined =>
   queueEntryStatuses.get(twitchUserId);

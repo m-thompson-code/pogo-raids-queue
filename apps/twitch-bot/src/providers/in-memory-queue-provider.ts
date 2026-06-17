@@ -48,6 +48,10 @@ export class InMemoryQueueProvider implements QueueProvider {
     void params;
   }
 
+  async removeFromTimedOutQueue(twitchUserId: string): Promise<void> {
+    void twitchUserId;
+  }
+
   async clearQueue(): Promise<void> {
     this.queue.clear();
   }

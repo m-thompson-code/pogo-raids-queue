@@ -16,13 +16,13 @@ export const messages = {
   raidInvalidUsername: (username: string) =>
     `@${username} Your pogo username includes an invalid character.`,
   raidAdded: (pogoUsername: string) =>
-    `${pogoUsername} added to the raid queue!`,
+    `${pogoUsername} added to the raid queue! Use !joined when you enter the raid.`,
   raidAlreadyInQueue: `You're already in the queue.`,
   raidForgotJoinedStrike: (count: number) =>
     count >= 3
       ? `You forgot to use !joined after your raid. You now have ${count} strikes and are timed out for 10 minutes.`
       : `You forgot to use !joined after your raid. You now have ${count} strike${count === 1 ? '' : 's'}. At 3 strikes, you will be timed out for 10 minutes.`,
-  raidTimedOut: (pogoUsername: string, remainingMs: number) => {
+  raidTimedOut: (twitchUsername: string, remainingMs: number) => {
     const totalSec = Math.ceil(remainingMs / 1000);
     const min = Math.floor(totalSec / 60);
     const sec = totalSec % 60;
@@ -31,7 +31,7 @@ export const messages = {
       : min > 0
         ? `${min} min`
         : `${sec} sec`;
-    return `${pogoUsername} is temporarily timed out. Try again in ${timeStr}.`;
+    return `@${twitchUsername} is temporarily timed out. Try again in ${timeStr}.`;
   },
   raidRejoinedQueue: (pogoUsername: string) =>
     `${pogoUsername} is back in the queue!`,
@@ -40,17 +40,19 @@ export const messages = {
       ? `Queue username updated from ${previousPogoUsername} to ${newPogoUsername}.`
       : `Queue username updated to ${newPogoUsername}.`,
   raidAddedUsernameSaved: (pogoUsername: string) =>
-    `${pogoUsername} added to the raid queue! Username saved — next time you can just use !raid`,
+    `${pogoUsername} added to the raid queue! Username saved — next time you can just use !raid. Use !joined when you enter the raid.`,
   raidAddedFirstTime: (pogoUsername: string) =>
-    `${pogoUsername} added to the raid queue! Make sure you have added ${FRIEND_CODE_RAW} and that the host has added you back.`,
+    `${pogoUsername} added to the raid queue! Make sure you have added ${FRIEND_CODE_RAW} and that the host has added you back. Use !joined when you enter the raid.`,
 
   // !leave
   leaveRemoved: (pogoUsername: string) =>
     `${pogoUsername} removed from the raid queue.`,
+  leaveNotInQueue: (username: string) =>
+    `@${username} You're not in the queue yet.`,
 
   // !remove
   removeUsage: (username: string) =>
-    `@${username} Usage: !remove <pogo_username>`,
+    `@${username} Usage: !remove <pogo_username>.`,
   removeSuccess: (pogoUsername: string) =>
     `${pogoUsername} has been removed from the queue.`,
   removeNotFound: (pogoUsername: string) =>
@@ -58,13 +60,13 @@ export const messages = {
 
   // !add
   addUsage: (username: string) =>
-    `@${username} Usage: !add <pogo_username>[,<pogo_username>...]`,
+    `@${username} Usage: !add <pogo_username>[,<pogo_username>...].`,
   addSuccess: (listed: string, noun: string) =>
     `${listed} ${noun} been added to the raid queue.`,
 
   // !invited
   invitedNotInQueue: (username: string) =>
-    `@${username} you're not in queue yet.`,
+    `@${username} You're not in queue yet.`,
   invitedAlreadyMarked: `You're already marked as invited.`,
   invitedSuccess: `Thank you for raiding with us!`,
 
@@ -86,27 +88,27 @@ export const messages = {
 
   // !strike
   strikeUsage: (username: string) =>
-    `@${username} Usage: !strike <twitch_username> [value]`,
+    `@${username} Usage: !strike <twitch_username> [value].`,
   strikeNotFound: (username: string, target: string) =>
     `@${username} User "${target}" was not found.`,
   strikeConfirm: (target: string, count: number) =>
-    `@${target} you now have ${count} strike${count === 1 ? '' : 's'}.${count >= 3 ? ' You will be timed out or banned if you receive more.' : ''}`,
+    `@${target} You now have ${count} strike${count === 1 ? '' : 's'}.${count >= 3 ? ' You will be timed out or banned if you receive more.' : ''}`,
 
   // hints
   hintStreamerWontAdd:
-    `Host will not add your code, add ${FRIEND_CODE_RAW} instead and post your pogo username`,
+    `Host will not add your code, add ${FRIEND_CODE_RAW} instead and post your pogo username.`,
   hintAddCodeFirst:
-    `Add ${FRIEND_CODE_RAW} and then use !raid to join queue`,
+    `Add ${FRIEND_CODE_RAW} and then use !raid to join queue.`,
   hintUseRaidCommand:
     `!raid your_pogo_username. Use !help for more information`,
   help:
-    `Add the host ${FRIEND_CODE_RAW} and tell host your username. Use !raid your_pogo_username to join the queue`,
+    `Add the host ${FRIEND_CODE_RAW} and tell host your username. Use !raid your_pogo_username to join the queue.`,
 
   // periodic interval reminder
   intervalReminder:
-    `Use !joined when you enter a raid. If you forget, you will be timed out for the next raid. Use !commands for a list of all commands`,
+    `Use !joined when you enter a raid. If you forget, you will be timed out for the next raid. Use !commands for a list of all commands.`,
   intervalPromo:
-    `Post your wins in discord https://discord.gg/AARRcwjChD and drop a follow on TikTok https://www.tiktok.com/@poketrainerhydro`,
+    `Post your wins in discord https://discord.gg/AARRcwjChD and drop a follow on TikTok https://www.tiktok.com/@poketrainerhydro.`,
 
   // spam detection
   spamWarning: (username: string) =>
