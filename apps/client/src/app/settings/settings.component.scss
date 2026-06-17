@@ -66,6 +66,28 @@
     color: #fff;
   }
 
+  .mode-btn--strict-on {
+    background: #ffdede;
+    border-color: #f5a3a3;
+    color: #a01f1f;
+
+    &:hover {
+      background: #ffc5c5;
+      color: #7f1616;
+    }
+  }
+
+  .mode-btn--strict-off {
+    background: #dbf8e9;
+    border-color: #9ad9b8;
+    color: #166740;
+
+    &:hover {
+      background: #c3efd9;
+      color: #0f5433;
+    }
+  }
+
   .color-pick {
     background: #e0daf5;
     border-color: #b8a8e0;
@@ -111,6 +133,28 @@
   &:hover {
     background: #3a3a5e;
     color: #fff;
+  }
+
+  &--strict-on {
+    background: #4b1f1f;
+    border-color: #7f2a2a;
+    color: #ffb4b4;
+
+    &:hover {
+      background: #6a2a2a;
+      color: #ffd4d4;
+    }
+  }
+
+  &--strict-off {
+    background: #1f3d2c;
+    border-color: #2f6d4f;
+    color: #8ae0b8;
+
+    &:hover {
+      background: #2a5740;
+      color: #b9f2d6;
+    }
   }
 }
 

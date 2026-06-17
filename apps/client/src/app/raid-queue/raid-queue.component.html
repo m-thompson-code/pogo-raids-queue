@@ -13,7 +13,6 @@
       <button class="toolbar-btn" (click)="copyAll(queue)">Copy all</button>
       <button class="toolbar-btn toolbar-btn--danger" (click)="clearAll(queue)">Clear all</button>
       <button class="toolbar-btn" (click)="toggleNotes()">{{ notesVisible() ? 'Hide notes' : 'Notes' }}</button>
-      <button class="toolbar-btn" (click)="toggleGroupSize()">Groups of {{ groupSize() }}</button>
       <form class="toolbar-add" (submit)="$event.preventDefault(); addUser()">
         <input
           class="toolbar-add__input"

@@ -34,6 +34,17 @@
           (input)="onBgChange($event)"
         />
       </div>
+
+      <div class="setting">
+        <span class="setting__label">Strict mode</span>
+        <button
+          class="mode-btn"
+          [class.mode-btn--strict-on]="strictMode"
+          [class.mode-btn--strict-off]="!strictMode"
+          (click)="toggleStrictMode()">
+          {{ strictMode ? 'On' : 'Off' }}
+        </button>
+      </div>
     </div>
   }
 </div>

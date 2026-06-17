@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { getFirestore, doc, onSnapshot, type Unsubscribe } from 'firebase/firestore';
-import { Subject } from 'rxjs';
+import { getFirestore, doc, onSnapshot, setDoc, type Unsubscribe } from 'firebase/firestore';
+import { BehaviorSubject, Subject } from 'rxjs';
 
 /**
  * Listens to the `settings/ui` Firestore document.
@@ -17,11 +17,17 @@ export class UiSettingsService implements OnDestroy {
   private lastRegirice: number | null = null;
 
   readonly regirice$ = new Subject<void>();
+  readonly strictMode$ = new BehaviorSubject<boolean>(false);
 
   constructor() {
     const db = getFirestore();
     this.unsubscribe = onSnapshot(doc(db, 'settings', 'ui'), (snapshot) => {
       const count: number | null = snapshot.data()?.['regirice'] ?? null;
+      const strictMode = snapshot.data()?.['strictMode'];
+
+      if (typeof strictMode === 'boolean') {
+        this.strictMode$.next(strictMode);
+      }
 
       if (this.lastRegirice === null) {
         // First snapshot — store baseline, don't animate
@@ -34,6 +40,11 @@ export class UiSettingsService implements OnDestroy {
         this.regirice$.next();
       }
     });
+  }
+
+  async setStrictMode(enabled: boolean): Promise<void> {
+    const db = getFirestore();
+    await setDoc(doc(db, 'settings', 'ui'), { strictMode: enabled }, { merge: true });
   }
 
   ngOnDestroy(): void {

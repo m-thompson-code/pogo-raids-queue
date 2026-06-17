@@ -1,6 +1,6 @@
 export { getFirebaseApp, getDb } from './lib/core/firebase.js';
 export { getUser, upsertUser, strikeUser, resetUserStrikes } from './lib/collections/users.js';
-export { triggerRegirice } from './lib/collections/settings.js';
+export { triggerRegirice, setUiStrictMode, subscribeToUiSettings } from './lib/collections/settings.js';
 export {
   addToQueue,
   addToTimedOutQueue,

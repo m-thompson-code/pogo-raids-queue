@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { UiSettingsService } from './ui-settings.service';
 
 interface Settings {
   darkMode: boolean;
@@ -18,8 +20,11 @@ const DEFAULT: Settings = { darkMode: true, fontScale: 1, bgColor: DARK_BG };
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent implements OnInit, OnDestroy {
+  private readonly uiSettings = inject(UiSettingsService);
+  private strictModeSub: Subscription | null = null;
   protected settings: Settings = { ...DEFAULT };
+  protected strictMode = false;
   protected open = false;
 
   readonly fontScaleOptions = [
@@ -35,6 +40,13 @@ export class SettingsComponent implements OnInit {
       if (stored) this.settings = { ...DEFAULT, ...JSON.parse(stored) };
     } catch { /* ignore */ }
     this.apply();
+    this.strictModeSub = this.uiSettings.strictMode$.subscribe((enabled) => {
+      this.strictMode = enabled;
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.strictModeSub?.unsubscribe();
   }
 
   protected toggleMode(): void {
@@ -54,6 +66,16 @@ export class SettingsComponent implements OnInit {
     this.settings.bgColor = (event.target as HTMLInputElement).value;
     this.apply();
     this.save();
+  }
+
+  protected async toggleStrictMode(): Promise<void> {
+    const next = !this.strictMode;
+    this.strictMode = next;
+    try {
+      await this.uiSettings.setStrictMode(next);
+    } catch {
+      this.strictMode = !next;
+    }
   }
 
   private apply(): void {

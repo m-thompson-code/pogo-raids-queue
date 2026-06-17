@@ -7,9 +7,13 @@ vi.mock('../persisted-settings.js', () => ({
   setStrictMode: vi.fn(),
   isStrictMode: vi.fn().mockReturnValue(false),
 }));
+vi.mock('@pogo-raid-system/firebase', () => ({
+  setUiStrictMode: vi.fn().mockResolvedValue(undefined),
+}));
 
 import { sendChatMessage } from '../api/chat.js';
 import { setStrictMode, isStrictMode } from '../persisted-settings.js';
+import { setUiStrictMode } from '@pogo-raid-system/firebase';
 
 const makeEvent = (text: string) => ({
   chatter_user_id: 'u1',
@@ -38,12 +42,14 @@ describe('handleStrictCommand', () => {
   it('enables strict mode on !strict on', async () => {
     await handleStrictCommand(makeEvent('!strict on') as unknown as ChatMessageEvent);
     expect(setStrictMode).toHaveBeenCalledWith(true);
+    expect(setUiStrictMode).toHaveBeenCalledWith(true);
     expect(sendChatMessage).toHaveBeenCalledWith('@moo Strict mode is now on.');
   });
 
   it('disables strict mode on !strict off', async () => {
     await handleStrictCommand(makeEvent('!strict off') as unknown as ChatMessageEvent);
     expect(setStrictMode).toHaveBeenCalledWith(false);
+    expect(setUiStrictMode).toHaveBeenCalledWith(false);
     expect(sendChatMessage).toHaveBeenCalledWith('@moo Strict mode is now off.');
   });
 });

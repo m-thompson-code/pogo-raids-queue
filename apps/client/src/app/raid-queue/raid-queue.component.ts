@@ -17,13 +17,7 @@ export class RaidQueueComponent {
   protected readonly snackbar = signal<string | null>(null);
   protected readonly addInput = signal('');
   protected readonly lastClearedAt = signal<Date | null>(null);
-  protected readonly groupSize = signal<5 | 10>(Number(localStorage.getItem('raid-group-size') ?? 10) === 5 ? 5 : 10);
-
-  protected toggleGroupSize(): void {
-    const next = this.groupSize() === 5 ? 10 : 5;
-    this.groupSize.set(next);
-    localStorage.setItem('raid-group-size', String(next));
-  }
+  protected readonly groupSize = signal<10>(10);
   protected readonly notesVisible = signal(localStorage.getItem('raid-notes-visible') === 'true');
   protected readonly notesText = signal(localStorage.getItem('raid-notes-text') ?? '');
   protected readonly notesHeight = signal(localStorage.getItem('raid-notes-height') ?? '');

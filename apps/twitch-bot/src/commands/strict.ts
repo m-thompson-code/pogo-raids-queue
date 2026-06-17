@@ -1,5 +1,6 @@
 import { sendChatMessage } from '../api/chat.js';
 import { setStrictMode, isStrictMode } from '../persisted-settings.js';
+import { setUiStrictMode } from '@pogo-raid-system/firebase';
 import type { ChatMessageEvent } from '../types.js';
 
 /**
@@ -20,5 +21,10 @@ export const handleStrictCommand = async (event: ChatMessageEvent): Promise<void
 
   const enable = arg === 'on';
   setStrictMode(enable);
+  try {
+    await setUiStrictMode(enable);
+  } catch {
+    // Keep local bot behavior correct even if Firestore write fails.
+  }
   await sendChatMessage(`@${event.chatter_user_login} Strict mode is now ${enable ? 'on' : 'off'}.`);
 };

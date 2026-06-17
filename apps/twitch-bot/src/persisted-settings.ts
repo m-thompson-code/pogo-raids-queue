@@ -44,6 +44,7 @@ const DEFAULTS: PersistedSettings = {
 };
 
 let settings: PersistedSettings = { ...DEFAULTS };
+let strictModeOverride: boolean | null = null;
 
 const save = (): void => {
   writeFileSync(CONFIG_PATH, JSON.stringify(settings, null, 2) + '\n');
@@ -108,4 +109,11 @@ export const setStrictMode = (enabled: boolean): void => {
   save();
 };
 
-export const isStrictMode = (): boolean => settings.strictMode ?? false;
+/**
+ * Runtime override from UI/Firestore. Null means "no override".
+ */
+export const setStrictModeOverride = (enabled: boolean | null): void => {
+  strictModeOverride = enabled;
+};
+
+export const isStrictMode = (): boolean => strictModeOverride ?? (settings.strictMode ?? false);

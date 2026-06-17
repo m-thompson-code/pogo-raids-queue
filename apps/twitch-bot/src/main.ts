@@ -2,7 +2,7 @@ import { validateToken } from './api/auth.js';
 import { connectBot } from '@pogo-raid-system/twitch-eventsub';
 import { SubscriptionType } from './types.js';
 import type { ChannelPointsRedemptionEvent } from './types.js';
-import { loadSettings, isCommandEnabled, getIntervalMessageMs, getInfoCooldownMs, getIntervalPromoMs } from './persisted-settings.js';
+import { loadSettings, isCommandEnabled, getIntervalMessageMs, getInfoCooldownMs, getIntervalPromoMs, setStrictModeOverride } from './persisted-settings.js';
 import { handleRaidCommand } from './commands/raid.js';
 import { handleClearCommand } from './commands/clear.js';
 import { handleOpenCommand } from './commands/open.js';
@@ -21,7 +21,7 @@ import { handleEnableCommand, handleDisableCommand } from './commands/enable-dis
 import { handleCommandsCommand } from './commands/commands.js';
 import { handleStrictCommand } from './commands/strict.js';
 import { checkSpam } from './detectables/spam-detection.js';
-import { subscribeToQueue, triggerRegirice } from '@pogo-raid-system/firebase';
+import { subscribeToQueue, subscribeToUiSettings, triggerRegirice } from '@pogo-raid-system/firebase';
 import { isPrivileged } from './permissions.js';
 import { sendChatMessage, registerEventSubListeners, registerBroadcasterEventSubListeners } from './api/chat.js';
 import { messages } from './messages.js';
@@ -79,6 +79,16 @@ const ignoredChatUsernames = new Set<string>([
       console.error('Firestore queue listener error — falling back to local state:', err);
       setFirestoreListenerActive(false);
     }
+  );
+
+  subscribeToUiSettings(
+    ({ strictMode }) => {
+      setStrictModeOverride(strictMode ?? null);
+    },
+    (err) => {
+      console.error('UI settings listener error:', err);
+      setStrictModeOverride(null);
+    },
   );
 
   // Second WebSocket connection for broadcaster-owned subscriptions (channel points).

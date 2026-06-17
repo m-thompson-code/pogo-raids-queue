@@ -75,6 +75,7 @@ src/
 - `!invited` must only use in-memory queue state for the "not in queue" branch and should not query `users` just to decide between messages.
 - Duplicate `!raid` from a user already in queue must return `raidAlreadyInQueue` during a 2-minute grace window; this window takes precedence over strict-mode strike handling.
 - If a timed-out user is manually restored to `raidQueue`, `!raid` should treat them as in-queue again (no re-add path). The bot reconciles stale local timeout flags against persisted `users.timedOutAt`.
+- Strict mode can be toggled from the client UI via `settings/ui.strictMode`. The bot listens to that value as a live runtime override; if absent, it falls back to local `bot-config.json` strict mode.
 - Never use `chatter_user_login` as a fallback pogo username. Twitch logins and pogo usernames are different values, and substituting one for the other is always a bug.
 
 Relevant helpers:
