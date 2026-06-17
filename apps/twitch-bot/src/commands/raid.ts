@@ -41,6 +41,33 @@ export const handleRaidCommand = async (
   }
 
   const cachedUsername = pogoUsernameCache.get(event.chatter_user_id);
+  const getStoredPogoUsername = async (): Promise<string | undefined> => {
+    if (cachedUsername) return cachedUsername;
+    const resolvedUsername = (await getUser(event.chatter_user_id))?.pogoUsername;
+    if (resolvedUsername) pogoUsernameCache.set(event.chatter_user_id, resolvedUsername);
+    return resolvedUsername;
+  };
+  const isSamePogoUsername = (left: string, right: string): boolean =>
+    left.toLowerCase() === right.toLowerCase();
+
+  const upsertAndAddToQueue = async (resolvedPogoUsername: string): Promise<void> => {
+    const raidParams = {
+      twitchUserId: event.chatter_user_id,
+      twitchUsername: event.chatter_user_login,
+      pogoUsername: resolvedPogoUsername,
+      isSubscriber: event.badges.some(
+        (b) => b.set_id === 'subscriber' || b.set_id === 'premium' || b.set_id === 'founder'
+      ),
+      isVip: event.badges.some((b) => b.set_id === 'vip'),
+    };
+
+    try {
+      await Promise.all([queue.upsertUser(raidParams), queue.addToQueue(raidParams)]);
+      if (!isFirestoreListenerActive()) markInQueue(event.chatter_user_id, resolvedPogoUsername);
+    } catch {
+      markInQueue(event.chatter_user_id, resolvedPogoUsername);
+    }
+  };
 
   if (!pogoUsername) {
     if (isInQueue(event.chatter_user_id)) {
@@ -58,23 +85,9 @@ export const handleRaidCommand = async (
       }
       return;
     }
-    const resolvedUsername = cachedUsername ?? (await getUser(event.chatter_user_id))?.pogoUsername;
+    const resolvedUsername = await getStoredPogoUsername();
     if (resolvedUsername) {
-      const raidParams = {
-        twitchUserId: event.chatter_user_id,
-        twitchUsername: event.chatter_user_login,
-        pogoUsername: resolvedUsername,
-        isSubscriber: event.badges.some(
-          (b) => b.set_id === 'subscriber' || b.set_id === 'premium' || b.set_id === 'founder'
-        ),
-        isVip: event.badges.some((b) => b.set_id === 'vip'),
-      };
-      try {
-        await Promise.all([queue.upsertUser(raidParams), queue.addToQueue(raidParams)]);
-        if (!isFirestoreListenerActive()) markInQueue(event.chatter_user_id, resolvedUsername);
-      } catch {
-        markInQueue(event.chatter_user_id, resolvedUsername);
-      }
+      await upsertAndAddToQueue(resolvedUsername);
       pogoUsernameCache.set(event.chatter_user_id, resolvedUsername);
       markRaidSuccess(event.chatter_user_id);
       await sendChatMessage(messages.raidAdded(resolvedUsername));
@@ -84,7 +97,15 @@ export const handleRaidCommand = async (
     return;
   }
 
+  if (!/^[a-zA-Z0-9]+$/.test(pogoUsername)) {
+    await sendChatMessage(messages.raidInvalidUsername(event.chatter_user_login));
+    return;
+  }
+
   if (isInQueue(event.chatter_user_id)) {
+    const previousPogoUsername = await getStoredPogoUsername();
+    const sameUsername = previousPogoUsername ? isSamePogoUsername(previousPogoUsername, pogoUsername) : false;
+
     if (getQueueEntryStatus(event.chatter_user_id) === 'invited') {
       try {
         await queue.setEntryStatus(event.chatter_user_id, 'joined');
@@ -92,15 +113,24 @@ export const handleRaidCommand = async (
       } catch {
         setQueueEntryStatus(event.chatter_user_id, 'joined');
       }
-      await sendChatMessage(messages.raidRejoinedQueue(pogoUsername));
-    } else {
-      await sendChatMessage(messages.raidAlreadyInQueue);
-    }
-    return;
-  }
+      if (sameUsername) {
+        await sendChatMessage(messages.raidRejoinedQueue(previousPogoUsername ?? pogoUsername));
+        return;
+      }
 
-  if (!/^[a-zA-Z0-9]+$/.test(pogoUsername)) {
-    await sendChatMessage(messages.raidInvalidUsername(event.chatter_user_login));
+      await upsertAndAddToQueue(pogoUsername);
+      pogoUsernameCache.set(event.chatter_user_id, pogoUsername);
+      await sendChatMessage(messages.raidUsernameUpdated(pogoUsername, previousPogoUsername));
+    } else {
+      if (sameUsername) {
+        await sendChatMessage(messages.raidAlreadyInQueue);
+        return;
+      }
+
+      await upsertAndAddToQueue(pogoUsername);
+      pogoUsernameCache.set(event.chatter_user_id, pogoUsername);
+      await sendChatMessage(messages.raidUsernameUpdated(pogoUsername, previousPogoUsername));
+    }
     return;
   }
 

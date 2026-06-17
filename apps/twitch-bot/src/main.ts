@@ -30,6 +30,12 @@ import { hydrateQueueMemory, setFirestoreListenerActive } from './detectables/sh
 // To use the in-memory provider instead, swap the import above for:
 // import { InMemoryQueueProvider } from './providers/in-memory-queue-provider.js';
 
+const normalizeUsername = (value: string): string => value.trim().replace(/^@/, '').toLowerCase();
+
+const ignoredChatUsernames = new Set<string>([
+  normalizeUsername('@PokemonCommunityGame'),
+]);
+
 /**
  * Bot entry point.
  *
@@ -96,9 +102,11 @@ import { hydrateQueueMemory, setFirestoreListenerActive } from './detectables/sh
   connectBot(config.eventSubWebSocketUrl, registerEventSubListeners, async ({ subscriptionType, event }) => {
     if (subscriptionType === SubscriptionType.ChannelChatMessage) {
       const chatEvent = event as import('./types.js').ChatMessageEvent;
+      const chatterUsername = normalizeUsername(chatEvent.chatter_user_login);
 
-      // Ignore messages from the bot itself to prevent feedback loops.
+      // Ignore messages from the bot itself and known automated accounts.
       if (chatEvent.chatter_user_id === config.botUserId) return;
+      if (ignoredChatUsernames.has(chatterUsername)) return;
 
       console.log(`MSG <${chatEvent.chatter_user_login}> ${chatEvent.message.text}`);
 

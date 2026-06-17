@@ -20,6 +20,10 @@ export const messages = {
   raidAlreadyInQueue: `You're already in the queue.`,
   raidRejoinedQueue: (pogoUsername: string) =>
     `${pogoUsername} is back in the queue!`,
+  raidUsernameUpdated: (newPogoUsername: string, previousPogoUsername?: string) =>
+    previousPogoUsername
+      ? `Queue username updated from ${previousPogoUsername} to ${newPogoUsername}.`
+      : `Queue username updated to ${newPogoUsername}.`,
   raidAddedUsernameSaved: (pogoUsername: string) =>
     `${pogoUsername} added to the raid queue! Username saved — next time you can just use !raid`,
   raidAddedFirstTime: (pogoUsername: string) =>

@@ -17,6 +17,11 @@ describe('messages', () => {
     it('raidAdded mentions the pogo username', () => {
       expect(messages.raidAdded('TrainerAsh')).toContain('TrainerAsh');
     });
+    it('raidUsernameUpdated mentions old and new usernames', () => {
+      const msg = messages.raidUsernameUpdated('NewName', 'OldName');
+      expect(msg).toContain('OldName');
+      expect(msg).toContain('NewName');
+    });
   });
 
   describe('leave', () => {

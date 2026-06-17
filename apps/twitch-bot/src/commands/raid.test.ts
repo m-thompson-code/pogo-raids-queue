@@ -12,6 +12,7 @@ vi.mock('../messages.js', () => ({
     raidAddedFirstTime: (p: string) => `raidAddedFirstTime:${p}`,
     raidAlreadyInQueue: 'raidAlreadyInQueue',
     raidRejoinedQueue: (p: string) => `raidRejoinedQueue:${p}`,
+    raidUsernameUpdated: (next: string, prev?: string) => `raidUsernameUpdated:${prev ?? ''}->${next}`,
   },
 }));
 vi.mock('../queue-state.js', () => ({ isQueueOpen: vi.fn() }));
@@ -39,9 +40,13 @@ import { markRaidSuccess, markInQueue, isInQueue, isFirestoreListenerActive, get
 import { getUser } from '@pogo-raid-system/firebase';
 import { queue } from '../providers/queue.js';
 
-const makeEvent = (text: string, badges: { set_id: string }[] = []) => ({
-  chatter_user_id: 'u1',
-  chatter_user_login: 'moo',
+const makeEvent = (
+  text: string,
+  badges: { set_id: string }[] = [],
+  { userId = 'u1', login = 'moo' }: { userId?: string; login?: string } = {}
+) => ({
+  chatter_user_id: userId,
+  chatter_user_login: login,
   message: { text },
   badges,
 });
@@ -134,6 +139,7 @@ describe('handleRaidCommand', () => {
     vi.mocked(isQueueOpen).mockReturnValue(true);
     vi.mocked(isInQueue).mockReturnValue(true);
     vi.mocked(getQueueEntryStatus).mockReturnValue('invited');
+    vi.mocked(getUser).mockResolvedValue({ pogoUsername: 'TrainerAsh' } as any);
     await handleRaidCommand(makeEvent('!raid TrainerAsh') as any);
     expect(queue.setEntryStatus).toHaveBeenCalledWith('u1', 'joined');
     expect(sendChatMessage).toHaveBeenCalledWith(expect.stringContaining('TrainerAsh'));
@@ -144,16 +150,32 @@ describe('handleRaidCommand', () => {
     vi.mocked(isInQueue).mockReturnValue(true);
     vi.mocked(getQueueEntryStatus).mockReturnValue('invited');
     vi.mocked(isFirestoreListenerActive).mockReturnValue(false);
+    vi.mocked(getUser).mockResolvedValue({ pogoUsername: 'TrainerAsh' } as any);
     await handleRaidCommand(makeEvent('!raid TrainerAsh') as any);
     expect(setQueueEntryStatus).toHaveBeenCalledWith('u1', 'joined');
   });
 
-  it('sends already-in-queue when user raids again and is already joined', async () => {
+  it('sends already-in-queue when user raids again with the same username and is already joined', async () => {
     vi.mocked(isQueueOpen).mockReturnValue(true);
     vi.mocked(isInQueue).mockReturnValue(true);
     vi.mocked(getQueueEntryStatus).mockReturnValue('joined');
+    vi.mocked(getUser).mockResolvedValue({ pogoUsername: 'TrainerAsh' } as any);
     await handleRaidCommand(makeEvent('!raid TrainerAsh') as any);
     expect(sendChatMessage).toHaveBeenCalledWith('raidAlreadyInQueue');
+  });
+
+  it('updates queued username when user raids with a different username', async () => {
+    vi.mocked(isQueueOpen).mockReturnValue(true);
+    vi.mocked(isInQueue).mockReturnValue(true);
+    vi.mocked(getQueueEntryStatus).mockReturnValue('joined');
+    vi.mocked(getUser).mockResolvedValue({ pogoUsername: 'OldName' } as any);
+
+    await handleRaidCommand(makeEvent('!raid NewName', [], { userId: 'u-update' }) as any);
+
+    expect(queue.upsertUser).toHaveBeenCalledWith(expect.objectContaining({ pogoUsername: 'NewName' }));
+    expect(queue.addToQueue).toHaveBeenCalledWith(expect.objectContaining({ pogoUsername: 'NewName' }));
+    expect(markInQueue).toHaveBeenCalledWith('u-update', 'NewName');
+    expect(sendChatMessage).toHaveBeenCalledWith('raidUsernameUpdated:OldName->NewName');
   });
 });
 
