@@ -289,6 +289,7 @@
   cursor: pointer !important;
   transition: background 0.15s;
   user-select: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 
   &--invited {
     background: var(--pill-invited-bg);
@@ -371,6 +372,7 @@
     outline: none;
     flex-shrink: 0;
     transition: color 0.15s, background 0.15s;
+    box-shadow: none;
 
     &:hover {
       color: #fff;
