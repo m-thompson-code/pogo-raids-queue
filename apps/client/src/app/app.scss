@@ -11,6 +11,23 @@
   pointer-events: none;
   z-index: -1;
 
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.05) 0,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    opacity: 0.07;
+    animation: tv-scanline-flicker 4s linear infinite;
+    will-change: opacity;
+    z-index: 1;
+  }
+
   &__layer {
     position: absolute;
     inset: 0;
@@ -22,6 +39,7 @@
       psyduck-background-drift 35s linear var(--psyduck-drift-delay, 0s) infinite,
       psyduck-background-visibility var(--psyduck-visibility-duration, 12s) ease-in-out var(--psyduck-visibility-delay, 0s) infinite;
     will-change: background-position, opacity;
+    z-index: 0;
   }
 }
 
@@ -55,6 +73,29 @@
 
   60.42% {
     opacity: 0;
+  }
+}
+
+@keyframes tv-scanline-flicker {
+  0%,
+  100% {
+    opacity: 0.07;
+  }
+
+  18% {
+    opacity: 0.055;
+  }
+
+  39% {
+    opacity: 0.08;
+  }
+
+  57% {
+    opacity: 0.06;
+  }
+
+  76% {
+    opacity: 0.075;
   }
 }
 
