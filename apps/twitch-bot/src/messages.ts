@@ -94,6 +94,14 @@ export const messages = {
   strikeConfirm: (target: string, count: number) =>
     `@${target} You now have ${count} strike${count === 1 ? '' : 's'}.${count >= 3 ? ' You will be timed out or banned if you receive more.' : ''}`,
 
+  // !timeout
+  timeoutUsage: (username: string) =>
+    `@${username} Usage: !timeout <twitch_username>.`,
+  timeoutNotFound: (username: string, target: string) =>
+    `@${username} User "${target}" was not found.`,
+  timeoutSuccess: (target: string) =>
+    `@${target} has been moved to the timed-out queue.`,
+
   // hints
   hintStreamerWontAdd:
     `Host will not add your code, add ${FRIEND_CODE_RAW} instead and post your pogo username.`,

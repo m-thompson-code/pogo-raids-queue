@@ -7,6 +7,16 @@ import { AuthService } from './auth/auth.service';
 import { SettingsComponent } from './settings/settings.component';
 import { UiSettingsService } from './settings/ui-settings.service';
 
+type BackgroundTile = {
+  src: string;
+  driftDelay: string;
+  visibilityDelay: string;
+};
+
+const PSYDUCK_BACKGROUND_DRIFT_SECONDS = 38;
+const PSYDUCK_BACKGROUND_SLOT_SECONDS = 6;
+const PSYDUCK_BACKGROUND_SOURCES = ['psyduck_1.png', 'psyduck_2.png'];
+
 @Component({
   imports: [RouterModule, LoginComponent, AsyncPipe, SettingsComponent],
   selector: 'app-root',
@@ -15,6 +25,12 @@ import { UiSettingsService } from './settings/ui-settings.service';
 })
 export class App implements OnInit, OnDestroy {
   protected readonly user$ = inject(AuthService).user$;
+  protected readonly backgroundVisibilityDuration = `${PSYDUCK_BACKGROUND_SLOT_SECONDS * PSYDUCK_BACKGROUND_SOURCES.length}s`;
+  protected readonly backgroundTiles: BackgroundTile[] = PSYDUCK_BACKGROUND_SOURCES.map((src, index, sources) => ({
+    src: `/${src}`,
+    driftDelay: `${-(PSYDUCK_BACKGROUND_DRIFT_SECONDS / sources.length) * index}s`,
+    visibilityDelay: `${-(PSYDUCK_BACKGROUND_SLOT_SECONDS * index)}s`,
+  }));
   private readonly uiSettings = inject(UiSettingsService);
   private regiriceSub: Subscription | null = null;
 

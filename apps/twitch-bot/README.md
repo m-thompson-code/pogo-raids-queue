@@ -26,6 +26,7 @@ src/
     ├── raid.ts            !raid – adds user to the queue
     ├── add.ts             !add  – manually adds a user (privileged)
     ├── remove.ts          !remove
+    ├── timeout.ts         !timeout
     ├── leave.ts           !leave
     ├── clear.ts           !clear
     ├── open.ts            !open

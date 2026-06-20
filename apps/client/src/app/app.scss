@@ -1,3 +1,63 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  position: relative;
+  isolation: isolate;
+}
+
+.app-background {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+
+  &__layer {
+    position: absolute;
+    inset: 0;
+    background-repeat: repeat;
+    background-size: 96px 96px;
+    background-position: 0 0;
+    opacity: 0;
+    animation:
+      psyduck-background-drift 35s linear var(--psyduck-drift-delay, 0s) infinite,
+      psyduck-background-visibility var(--psyduck-visibility-duration, 12s) ease-in-out var(--psyduck-visibility-delay, 0s) infinite;
+    will-change: background-position, opacity;
+  }
+}
+
+@keyframes psyduck-background-drift {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 1344px 576px;
+  }
+}
+
+@keyframes psyduck-background-visibility {
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  12.5% {
+    opacity: 0;
+  }
+
+  27.38% {
+    opacity: 0.12;
+  }
+
+  45.54% {
+    opacity: 0.12;
+  }
+
+  60.42% {
+    opacity: 0;
+  }
+}
+
 // ── Regirice spawn ─────────────────────────────────────────────────────────
 
 .regirice-btn {

@@ -49,7 +49,7 @@ export const COMMAND_REGISTRY: CommandMeta[] = [
     command: 'groups',
     usage: '!groups',
     permission: 'mods',
-    description: 'Lists the queue grouped in sets of 5',
+    description: 'Lists the queue grouped in sets of 10',
   },
   {
     command: 'add',
@@ -62,6 +62,12 @@ export const COMMAND_REGISTRY: CommandMeta[] = [
     usage: '!remove <PogoUsername>',
     permission: 'mods',
     description: 'Removes a specific user',
+  },
+  {
+    command: 'timeout',
+    usage: '!timeout <TwitchUsername>',
+    permission: 'mods',
+    description: 'Moves a user to the timed-out queue',
   },
   {
     command: 'clear',

@@ -49,7 +49,7 @@ describe('COMMAND_REGISTRY', () => {
   });
 
   it('privileged commands (clear, open, close, strike) require mods', () => {
-    const privileged = ['clear', 'open', 'close', 'strike', 'add', 'remove'];
+    const privileged = ['clear', 'open', 'close', 'strike', 'add', 'remove', 'timeout'];
     for (const cmd of privileged) {
       const meta = COMMAND_REGISTRY.find((m) => m.command === cmd);
       expect(meta?.permission, `${cmd} should require mods`).toBe('mods');

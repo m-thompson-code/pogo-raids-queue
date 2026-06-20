@@ -13,6 +13,7 @@ import { handleAddCommand } from './commands/add.js';
 import { handleLeaveCommand } from './commands/leave.js';
 import { handleInvitedCommand } from './commands/invited.js';
 import { handleRemoveCommand } from './commands/remove.js';
+import { handleTimeoutCommand } from './commands/timeout.js';
 import { handleStrikeCommand, strikeByUsername } from './commands/strike.js';
 import { handleHintCooldownCommand } from './detectables/hints.js';
 import { runDetectables } from './detectables/main.js';
@@ -191,7 +192,7 @@ const ignoredChatUsernames = new Set<string>([
         handleLeaveCommand(chatEvent);
       } else if (command === 'invited') {
         handleInvitedCommand(chatEvent);
-      } else if (command === 'clear' || command === 'open' || command === 'close' || command === 'list' || command === 'groups' || command === 'add' || command === 'remove' || command === 'strike' || command === 'hintcooldown' || command === 'spamwindow' || command === 'strict') {
+      } else if (command === 'clear' || command === 'open' || command === 'close' || command === 'list' || command === 'groups' || command === 'add' || command === 'remove' || command === 'timeout' || command === 'strike' || command === 'hintcooldown' || command === 'spamwindow' || command === 'strict') {
         if (!isPrivileged(chatEvent)) {
           sendChatMessage(`@${chatEvent.chatter_user_login} you do not have permissions for that command`);
           return;
@@ -210,6 +211,8 @@ const ignoredChatUsernames = new Set<string>([
           handleAddCommand(chatEvent);
         } else if (command === 'remove') {
           handleRemoveCommand(chatEvent);
+        } else if (command === 'timeout') {
+          handleTimeoutCommand(chatEvent);
         } else if (command === 'strike') {
           handleStrikeCommand(chatEvent);
         } else if (command === 'hintcooldown') {

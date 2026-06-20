@@ -1,5 +1,17 @@
 @let authState = user$ | async;
 
+<div class="app-background" aria-hidden="true">
+  @for (tile of backgroundTiles; track tile.src; let index = $index) {
+    <div
+      class="app-background__layer"
+      [style.background-image]="'url(' + tile.src + ')'"
+      [style.--psyduck-drift-delay]="tile.driftDelay"
+      [style.--psyduck-visibility-duration]="backgroundVisibilityDuration"
+      [style.--psyduck-visibility-delay]="tile.visibilityDelay"
+    ></div>
+  }
+</div>
+
 @if (authState === undefined) {
   <!-- resolving auth state -->
 } @else if (authState) {
