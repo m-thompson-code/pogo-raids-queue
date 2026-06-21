@@ -32,11 +32,11 @@
     position: absolute;
     inset: 0;
     background-repeat: repeat;
-    background-size: 96px 96px;
+    background-size: 80px 80px;
     background-position: 0 0;
     opacity: 0;
     animation:
-      psyduck-background-drift 35s linear var(--psyduck-drift-delay, 0s) infinite,
+      psyduck-background-drift 38s linear var(--psyduck-drift-delay, 0s) infinite,
       psyduck-background-visibility var(--psyduck-visibility-duration, 12s) ease-in-out var(--psyduck-visibility-delay, 0s) infinite;
     will-change: background-position, opacity;
     z-index: 0;
@@ -49,7 +49,7 @@
   }
 
   to {
-    background-position: 1344px 576px;
+    background-position: 1280px 560px;
   }
 }
 
@@ -59,19 +59,19 @@
     opacity: 0;
   }
 
-  12.5% {
+  8% {
     opacity: 0;
   }
 
-  27.38% {
+  20% {
     opacity: 0.12;
   }
 
-  45.54% {
+  28% {
     opacity: 0.12;
   }
 
-  60.42% {
+  33% {
     opacity: 0;
   }
 }

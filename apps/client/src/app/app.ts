@@ -15,7 +15,7 @@ type BackgroundTile = {
 
 const PSYDUCK_BACKGROUND_DRIFT_SECONDS = 38;
 const PSYDUCK_BACKGROUND_SLOT_SECONDS = 6;
-const PSYDUCK_BACKGROUND_SOURCES = ['psyduck_1.png', 'psyduck_2.png'];
+const PSYDUCK_BACKGROUND_SOURCES = ['psyduck_1.png', 'psyduck_2.png', 'psyduck_3.png'];
 
 @Component({
   imports: [RouterModule, LoginComponent, AsyncPipe, SettingsComponent],
