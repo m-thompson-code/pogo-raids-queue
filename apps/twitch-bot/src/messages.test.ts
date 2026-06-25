@@ -17,6 +17,10 @@ describe('messages', () => {
     it('raidAdded mentions the pogo username', () => {
       expect(messages.raidAdded('TrainerAsh')).toContain('TrainerAsh');
     });
+    it('raidAlreadyJoined mentions already joined', () => {
+      expect(messages.raidAlreadyJoined).toContain('already');
+      expect(messages.raidAlreadyJoined).toContain('joined');
+    });
     it('raidUsernameUpdated mentions old and new usernames', () => {
       const msg = messages.raidUsernameUpdated('NewName', 'OldName');
       expect(msg).toContain('OldName');

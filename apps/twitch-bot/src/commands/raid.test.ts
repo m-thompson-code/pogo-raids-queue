@@ -12,6 +12,7 @@ vi.mock('../messages.js', () => ({
     raidAddedUsernameSaved: (p: string) => `raidAddedUsernameSaved:${p}`,
     raidAddedFirstTime: (p: string) => `raidAddedFirstTime:${p}`,
     raidAlreadyInQueue: 'raidAlreadyInQueue',
+    raidAlreadyJoined: 'raidAlreadyJoined',
     raidForgotJoinedStrike: (count: number) => `raidForgotJoinedStrike:${count}`,
     raidTimedOut: (u: string, ms: number) => `raidTimedOut:${u}:${ms}`,
 
@@ -177,24 +178,39 @@ describe('handleRaidCommand', () => {
     expect(sendChatMessage).toHaveBeenCalledWith(expect.stringContaining('TrainerAsh'));
   });
 
-  it('resets invited user back to joined when they raid again with username', async () => {
+  it('does not reset invited user status when they raid again with username', async () => {
     vi.mocked(isQueueOpen).mockReturnValue(true);
     vi.mocked(isInQueue).mockReturnValue(true);
     vi.mocked(getQueueEntryStatus).mockReturnValue('invited');
     vi.mocked(getUser).mockResolvedValue({ pogoUsername: 'TrainerAsh' } as never);
     await handleRaidCommand(makeEvent('!raid TrainerAsh'));
-    expect(queue.setEntryStatus).toHaveBeenCalledWith('u1', 'joined');
-    expect(sendChatMessage).toHaveBeenCalledWith(expect.stringContaining('TrainerAsh'));
+    expect(queue.setEntryStatus).not.toHaveBeenCalled();
+    expect(sendChatMessage).toHaveBeenCalledWith('raidAlreadyJoined');
   });
 
-  it('updates local status when listener is inactive and user re-joins from invited', async () => {
+  it('does not change local status when listener is inactive and user is invited', async () => {
     vi.mocked(isQueueOpen).mockReturnValue(true);
     vi.mocked(isInQueue).mockReturnValue(true);
     vi.mocked(getQueueEntryStatus).mockReturnValue('invited');
     vi.mocked(isFirestoreListenerActive).mockReturnValue(false);
     vi.mocked(getUser).mockResolvedValue({ pogoUsername: 'TrainerAsh' } as never);
     await handleRaidCommand(makeEvent('!raid TrainerAsh'));
-    expect(setQueueEntryStatus).toHaveBeenCalledWith('u1', 'joined');
+    expect(setQueueEntryStatus).not.toHaveBeenCalled();
+    expect(sendChatMessage).toHaveBeenCalledWith('raidAlreadyJoined');
+  });
+
+  it('does not strike invited users when !raid has no username', async () => {
+    vi.mocked(isQueueOpen).mockReturnValue(true);
+    vi.mocked(isInQueue).mockReturnValue(true);
+    vi.mocked(getQueueEntryStatus).mockReturnValue('invited');
+    vi.mocked(getUser).mockResolvedValue({ pogoUsername: 'TrainerAsh' } as never);
+
+    await handleRaidCommand(makeEvent('!raid'));
+
+    expect(strikeUser).not.toHaveBeenCalled();
+    expect(sendChatMessage).toHaveBeenCalledWith('raidAlreadyJoined');
+    expect(queue.setEntryStatus).not.toHaveBeenCalled();
+    expect(setQueueEntryStatus).not.toHaveBeenCalled();
   });
 
   it('sends already-in-queue when strict mode is off and user raids again with same username', async () => {

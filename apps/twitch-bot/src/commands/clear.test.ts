@@ -7,13 +7,12 @@ vi.mock('../messages.js', () => ({
 }));
 vi.mock('../detectables/shared.js', () => ({
   clearQueueMemory: vi.fn(),
-  isFirestoreListenerActive: vi.fn().mockReturnValue(false),
 }));
 vi.mock('../providers/queue.js', () => ({ queue: { clearQueue: vi.fn().mockResolvedValue(undefined) } }));
 
 import { sendChatMessage } from '../api/chat.js';
 import { queue } from '../providers/queue.js';
-import { clearQueueMemory, isFirestoreListenerActive } from '../detectables/shared.js';
+import { clearQueueMemory } from '../detectables/shared.js';
 import type { ChatMessageEvent } from '../types.js';
 
 const makeEvent = () => ({
@@ -32,16 +31,14 @@ describe('handleClearCommand', () => {
     expect(sendChatMessage).toHaveBeenCalledWith('clearSuccess:moo');
   });
 
-  it('clears local state directly when listener is inactive', async () => {
-    vi.mocked(isFirestoreListenerActive).mockReturnValue(false);
+  it('clears local state after successful queue clear', async () => {
     await handleClearCommand(makeEvent() as unknown as ChatMessageEvent);
     expect(clearQueueMemory).toHaveBeenCalledOnce();
   });
 
-  it('does not clear local state when listener is active', async () => {
-    vi.mocked(isFirestoreListenerActive).mockReturnValue(true);
+  it('still clears local state when queue listener would be active', async () => {
     await handleClearCommand(makeEvent() as unknown as ChatMessageEvent);
-    expect(clearQueueMemory).not.toHaveBeenCalled();
+    expect(clearQueueMemory).toHaveBeenCalledOnce();
   });
 
   it('clears local state on Firestore failure and still sends confirmation', async () => {

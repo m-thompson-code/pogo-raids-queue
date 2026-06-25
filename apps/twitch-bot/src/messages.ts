@@ -18,6 +18,7 @@ export const messages = {
   raidAdded: (pogoUsername: string) =>
     `${pogoUsername} added to the raid queue! Use !joined when you enter the raid.`,
   raidAlreadyInQueue: `You're already in the queue.`,
+  raidAlreadyJoined: `You're already marked as joined for this raid.`,
   raidForgotJoinedStrike: (count: number) =>
     count >= 3
       ? `You forgot to use !joined after your raid. You now have ${count} strikes and are timed out for 10 minutes.`

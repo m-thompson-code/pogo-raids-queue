@@ -1,7 +1,7 @@
 import { sendChatMessage } from '../api/chat.js';
 import { messages } from '../messages.js';
 import { isQueueOpen } from '../queue-state.js';
-import { markRaidSuccess, isFirstTimeChatter, markInQueue, isInQueue, isFirestoreListenerActive, getQueueEntryStatus, setQueueEntryStatus, unmarkRaidSuccess, markFirstTimeChatter, unmarkInQueueByTwitchId, getQueuedPogoUsername } from '../detectables/shared.js';
+import { markRaidSuccess, isFirstTimeChatter, markInQueue, isInQueue, isFirestoreListenerActive, getQueueEntryStatus, unmarkRaidSuccess, markFirstTimeChatter, unmarkInQueueByTwitchId, getQueuedPogoUsername } from '../detectables/shared.js';
 import { getUser, strikeUser } from '@pogo-raid-system/firebase';
 import { queue } from '../providers/queue.js';
 import { isStrictMode } from '../persisted-settings.js';
@@ -171,13 +171,7 @@ export const handleRaidCommand = async (
         return;
       }
       if (getQueueEntryStatus(event.chatter_user_id) === 'invited') {
-        try {
-          await queue.setEntryStatus(event.chatter_user_id, 'joined');
-          if (!isFirestoreListenerActive()) setQueueEntryStatus(event.chatter_user_id, 'joined');
-        } catch {
-          setQueueEntryStatus(event.chatter_user_id, 'joined');
-        }
-        await sendChatMessage(messages.raidRejoinedQueue(pogo));
+        await sendChatMessage(messages.raidAlreadyJoined);
       } else if (isStrictMode()) {
         await strikeForForgotJoined(pogo);
       } else {
@@ -208,20 +202,7 @@ export const handleRaidCommand = async (
     const sameUsername = previousPogoUsername ? isSamePogoUsername(previousPogoUsername, pogoUsername) : false;
 
     if (getQueueEntryStatus(event.chatter_user_id) === 'invited') {
-      try {
-        await queue.setEntryStatus(event.chatter_user_id, 'joined');
-        if (!isFirestoreListenerActive()) setQueueEntryStatus(event.chatter_user_id, 'joined');
-      } catch {
-        setQueueEntryStatus(event.chatter_user_id, 'joined');
-      }
-      if (sameUsername) {
-        await sendChatMessage(messages.raidRejoinedQueue(previousPogoUsername ?? pogoUsername));
-        return;
-      }
-
-      await upsertAndAddToQueue(pogoUsername);
-      pogoUsernameCache.set(event.chatter_user_id, pogoUsername);
-      await sendChatMessage(messages.raidUsernameUpdated(pogoUsername, previousPogoUsername));
+      await sendChatMessage(messages.raidAlreadyJoined);
     } else {
       if (sameUsername) {
         if (repeatedWithinWindow) {
