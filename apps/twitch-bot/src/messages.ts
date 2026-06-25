@@ -116,7 +116,7 @@ export const messages = {
   intervalReminder:
     `Use !joined when you enter a raid. If you forget, you will be timed out for the next raid. Use !commands for a list of all commands.`,
   intervalPromo:
-    `Post your wins in discord https://discord.gg/AARRcwjChD and drop a follow on TikTok https://www.tiktok.com/@poketrainerhydro.`,
+    `Post your wins in discord https://discord.gg/AARRcwjChD and drop a follow on TikTok https://www.tiktok.com/@poketrainerhydro`,
 
   // spam detection
   spamWarning: (username: string) =>
