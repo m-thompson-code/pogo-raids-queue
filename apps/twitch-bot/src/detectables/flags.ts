@@ -21,8 +21,8 @@ export const isBegging = (lower: string): boolean =>
 
 /** Matches messages where the user is explicitly requesting to be added/invited. */
 export const REQUESTING_PATTERNS = [
-  // "add me/my" / "invite me/my" / "add <username>" / "invite <username>"
-  /\b(add|invite)\s+(me|my|[a-z0-9_]{3,})\b/,
+  // "add me/my/you/u" / "invite me/my/you/u" / "add <username>" / "invite <username>"
+  /\b(add|invite)\s+(me|my|you|u|[a-z0-9_]{3,})\b/,
   /\bput\s+(me|my)\s+(in|on)\b/,
   /\bget\s+(me|my)?\s*in\b/,
   /\badded\s+to\b/,
