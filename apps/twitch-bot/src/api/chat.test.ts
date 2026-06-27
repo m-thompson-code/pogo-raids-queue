@@ -8,6 +8,8 @@ vi.mock('../config.js', () => ({
     botUserId: 'bot-123',
     chatChannelUserId: 'channel-456',
     eventSubWebSocketUrl: '',
+    twitchHttpMaxRetries: 0,
+    twitchHttpRetryBaseDelayMs: 1,
   },
 }));
 

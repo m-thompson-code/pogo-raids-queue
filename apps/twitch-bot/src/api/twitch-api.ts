@@ -1,4 +1,5 @@
 import { config } from '../config.js';
+import { fetchWithRetry } from './http.js';
 
 /**
  * Looks up a Twitch user by login name via the Helix API.
@@ -8,12 +9,19 @@ import { config } from '../config.js';
  */
 export const getTwitchUserId = async (login: string): Promise<string | null> => {
   const url = `https://api.twitch.tv/helix/users?login=${encodeURIComponent(login)}`;
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${config.oauthToken}`,
-      'Client-Id': config.clientId,
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetchWithRetry(url, {
+      headers: {
+        Authorization: `Bearer ${config.oauthToken}`,
+        'Client-Id': config.clientId,
+      },
+    });
+  } catch (error) {
+    console.error(`Failed to resolve Twitch user id for "${login}" due to network error.`);
+    console.error(error);
+    return null;
+  }
 
   if (!response.ok) return null;
 

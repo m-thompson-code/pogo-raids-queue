@@ -27,6 +27,12 @@ export const config = {
   /** Twitch EventSub WebSocket endpoint */
   eventSubWebSocketUrl: 'wss://eventsub.wss.twitch.tv/ws',
 
+  /** Number of retries for transient Twitch HTTP connection timeouts */
+  twitchHttpMaxRetries: Number.parseInt(process.env['TWITCH_HTTP_MAX_RETRIES'] ?? '2', 10),
+
+  /** Initial retry delay (ms) for Twitch HTTP connection timeout retries */
+  twitchHttpRetryBaseDelayMs: Number.parseInt(process.env['TWITCH_HTTP_RETRY_BASE_DELAY_MS'] ?? '500', 10),
+
   /**
    * When true, the bot subscribes to chat and processes all commands but
    * never actually sends messages or writes to Firestore.

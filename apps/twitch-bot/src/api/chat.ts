@@ -1,4 +1,5 @@
 import { config } from '../config.js';
+import { fetchWithRetry } from './http.js';
 
 /**
  * Sends a chat message to the configured channel via the Twitch Helix API.
@@ -20,19 +21,26 @@ export const sendChatMessage = async (chatMessage: string): Promise<void> => {
     return;
   }
 
-  const response = await fetch('https://api.twitch.tv/helix/chat/messages', {
-    method: 'POST',
-    headers: {
-      Authorization: 'Bearer ' + config.oauthToken,
-      'Client-Id': config.clientId,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      broadcaster_id: config.chatChannelUserId,
-      sender_id: config.botUserId,
-      message: chatMessage,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetchWithRetry('https://api.twitch.tv/helix/chat/messages', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + config.oauthToken,
+        'Client-Id': config.clientId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        broadcaster_id: config.chatChannelUserId,
+        sender_id: config.botUserId,
+        message: chatMessage,
+      }),
+    });
+  } catch (error) {
+    console.error('Failed to send chat message due to network error.');
+    console.error(error);
+    return;
+  }
 
   if (response.status !== 200) {
     const data = await response.json();
@@ -58,29 +66,37 @@ export const sendChatMessage = async (chatMessage: string): Promise<void> => {
 export const registerEventSubListeners = async (
   websocketSessionId: string
 ): Promise<void> => {
-  const response = await fetch(
-    'https://api.twitch.tv/helix/eventsub/subscriptions',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + config.oauthToken,
-        'Client-Id': config.clientId,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        type: 'channel.chat.message',
-        version: '1',
-        condition: {
-          broadcaster_user_id: config.chatChannelUserId,
-          user_id: config.botUserId,
+  let response: Response;
+  try {
+    response = await fetchWithRetry(
+      'https://api.twitch.tv/helix/eventsub/subscriptions',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + config.oauthToken,
+          'Client-Id': config.clientId,
+          'Content-Type': 'application/json',
         },
-        transport: {
-          method: 'websocket',
-          session_id: websocketSessionId,
-        },
-      }),
-    }
-  );
+        body: JSON.stringify({
+          type: 'channel.chat.message',
+          version: '1',
+          condition: {
+            broadcaster_user_id: config.chatChannelUserId,
+            user_id: config.botUserId,
+          },
+          transport: {
+            method: 'websocket',
+            session_id: websocketSessionId,
+          },
+        }),
+      }
+    );
+  } catch (error) {
+    console.error('Failed to subscribe to channel.chat.message due to network error.');
+    console.error(error);
+    process.exit(1);
+    return;
+  }
 
   if (response.status !== 202) {
     const data = await response.json();
@@ -119,9 +135,16 @@ export const registerBroadcasterEventSubListeners = async (
     return;
   }
 
-  const validateRes = await fetch('https://id.twitch.tv/oauth2/validate', {
-    headers: { Authorization: 'OAuth ' + config.broadcasterOauthToken },
-  });
+  let validateRes: Response;
+  try {
+    validateRes = await fetchWithRetry('https://id.twitch.tv/oauth2/validate', {
+      headers: { Authorization: 'OAuth ' + config.broadcasterOauthToken },
+    });
+  } catch (error) {
+    console.error('⚠️  Failed to validate BROADCASTER_OAUTH_TOKEN due to network error — channel point redemptions will not be tracked.');
+    console.error(error);
+    return;
+  }
   if (!validateRes.ok) {
     console.error('⚠️  BROADCASTER_OAUTH_TOKEN is invalid or expired — channel point redemptions will not be tracked.');
     console.error('   Regenerate it using step 4b in apps/twitch-bot/README.md.');
@@ -134,28 +157,35 @@ export const registerBroadcasterEventSubListeners = async (
     return;
   }
 
-  const cpResponse = await fetch(
-    'https://api.twitch.tv/helix/eventsub/subscriptions',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + config.broadcasterOauthToken,
-        'Client-Id': config.clientId,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        type: 'channel.channel_points_custom_reward_redemption.add',
-        version: '1',
-        condition: {
-          broadcaster_user_id: config.chatChannelUserId,
+  let cpResponse: Response;
+  try {
+    cpResponse = await fetchWithRetry(
+      'https://api.twitch.tv/helix/eventsub/subscriptions',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + config.broadcasterOauthToken,
+          'Client-Id': config.clientId,
+          'Content-Type': 'application/json',
         },
-        transport: {
-          method: 'websocket',
-          session_id: websocketSessionId,
-        },
-      }),
-    }
-  );
+        body: JSON.stringify({
+          type: 'channel.channel_points_custom_reward_redemption.add',
+          version: '1',
+          condition: {
+            broadcaster_user_id: config.chatChannelUserId,
+          },
+          transport: {
+            method: 'websocket',
+            session_id: websocketSessionId,
+          },
+        }),
+      }
+    );
+  } catch (error) {
+    console.error('⚠️  Failed to subscribe to channel points due to network error — channel point redemptions will not be tracked.');
+    console.error(error);
+    return;
+  }
 
   if (cpResponse.status !== 202) {
     const data = await cpResponse.json();

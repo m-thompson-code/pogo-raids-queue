@@ -1,4 +1,5 @@
 import { config } from '../config.js';
+import { fetchWithRetry } from './http.js';
 
 /**
  * Validates the OAuth token against the Twitch token-validation endpoint.
@@ -10,12 +11,20 @@ import { config } from '../config.js';
  * @see https://dev.twitch.tv/docs/authentication/validate-tokens/
  */
 export const validateToken = async (): Promise<void> => {
-  const response = await fetch('https://id.twitch.tv/oauth2/validate', {
-    method: 'GET',
-    headers: {
-      Authorization: 'OAuth ' + config.oauthToken,
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetchWithRetry('https://id.twitch.tv/oauth2/validate', {
+      method: 'GET',
+      headers: {
+        Authorization: 'OAuth ' + config.oauthToken,
+      },
+    });
+  } catch (error) {
+    console.error('Failed to reach Twitch token validation endpoint.');
+    console.error(error);
+    process.exit(1);
+    return;
+  }
 
   if (response.status !== 200) {
     const data = await response.json();
