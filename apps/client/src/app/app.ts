@@ -25,6 +25,7 @@ const PSYDUCK_BACKGROUND_SOURCES = ['psyduck_1.png', 'psyduck_2.png', 'psyduck_3
 })
 export class App implements OnInit, OnDestroy {
   protected readonly user$ = inject(AuthService).user$;
+  protected readonly showAnimatedBackground = false;
   protected readonly backgroundVisibilityDuration = `${PSYDUCK_BACKGROUND_SLOT_SECONDS * PSYDUCK_BACKGROUND_SOURCES.length}s`;
   protected readonly backgroundTiles: BackgroundTile[] = PSYDUCK_BACKGROUND_SOURCES.map((src, index, sources) => ({
     src: `/${src}`,

@@ -9,10 +9,28 @@ interface Settings {
   bgColor: string;
 }
 
-const STORAGE_KEY = 'pogo-raid-settings';
+const LEGACY_STORAGE_KEY = 'pogo-raid-settings';
+const STORAGE_KEY_PREFIX = 'pogo-raid-settings';
 const DARK_BG = '#13131f';
 const LIGHT_BG = '#f4f4f8';
 const DEFAULT: Settings = { darkMode: true, fontScale: 1, bgColor: DARK_BG };
+
+const buildQueryScopedStorageKey = (): string => {
+  if (typeof window === 'undefined') return `${STORAGE_KEY_PREFIX}:default`;
+
+  const params = new URLSearchParams(window.location.search);
+  const serialized = Array.from(params.entries())
+    .sort(([keyA, valueA], [keyB, valueB]) => {
+      if (keyA === keyB) return valueA.localeCompare(valueB);
+      return keyA.localeCompare(keyB);
+    })
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&');
+
+  return serialized
+    ? `${STORAGE_KEY_PREFIX}:${serialized}`
+    : `${STORAGE_KEY_PREFIX}:default`;
+};
 
 @Component({
   selector: 'app-settings',
@@ -22,6 +40,7 @@ const DEFAULT: Settings = { darkMode: true, fontScale: 1, bgColor: DARK_BG };
 })
 export class SettingsComponent implements OnInit, OnDestroy {
   private readonly uiSettings = inject(UiSettingsService);
+  private readonly settingsStorageKey = buildQueryScopedStorageKey();
   private strictModeSub: Subscription | null = null;
   protected settings: Settings = { ...DEFAULT };
   protected readonly strictMode = signal(false);
@@ -36,7 +55,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored =
+        localStorage.getItem(this.settingsStorageKey) ??
+        localStorage.getItem(LEGACY_STORAGE_KEY);
       if (stored) this.settings = { ...DEFAULT, ...JSON.parse(stored) };
     } catch { /* ignore */ }
     this.apply();
@@ -86,6 +107,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   private save(): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings));
+    localStorage.setItem(this.settingsStorageKey, JSON.stringify(this.settings));
   }
 }

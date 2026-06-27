@@ -1,5 +1,8 @@
 import { config } from '../config.js';
 
+type FetchInput = Parameters<typeof fetch>[0];
+type FetchInit = Parameters<typeof fetch>[1];
+
 const sleep = async (ms: number): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, ms));
 };
@@ -17,8 +20,8 @@ const isConnectTimeoutError = (error: unknown): boolean => {
  * UND_ERR_CONNECT_TIMEOUT via undici. Retrying these failures usually succeeds.
  */
 export const fetchWithRetry = async (
-  input: RequestInfo | URL,
-  init?: RequestInit
+  input: FetchInput,
+  init?: FetchInit
 ): Promise<Response> => {
   const retries = config.twitchHttpMaxRetries;
   const baseDelayMs = config.twitchHttpRetryBaseDelayMs;
